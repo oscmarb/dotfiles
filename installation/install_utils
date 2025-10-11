@@ -1,0 +1,156 @@
+#!/bin/bash
+
+source "$DOTFILES_PATH/installation/packages/main"
+
+confirm_verbose() {
+    if system::is_verbose_declared; then
+        return
+    fi
+
+    if system::is_debug_enabled; then
+        if ! system::is_verbose_declared; then
+            system::enable_verbose
+        fi
+
+        return
+    fi
+
+    prompt::ask_yes_no "Do you want to enable verbose?" "y"
+
+    if [ $? -eq "$TRUE" ]; then
+        system::enable_verbose
+    else
+        system::disable_verbose
+    fi
+}
+
+select_installation_type() {
+    if system::is_installation_type_declared; then
+        return
+    fi
+
+    set +e
+    prompt::select_option "Select the installation type" "${DOTFILES_INSTALLATION_TYPE_OPTIONS[@]}"
+    local selected_index=$?
+    set -e
+
+    system::set_installation_type "${DOTFILES_INSTALLATION_TYPE_OPTIONS[$selected_index]}"
+}
+
+install_packages() {
+    _install_packages_by_file_path "$DOTFILES_PATH/packages/shared.txt"
+
+    # Install installation type specific packages
+    local installation_type=$(system::get_installation_type | tr '[:upper:]' '[:lower:]')
+    local type_specific_file="$DOTFILES_PATH/packages/${installation_type}.txt"
+
+    _install_packages_by_file_path "$type_specific_file"
+}
+
+_install_packages_by_file_path() {
+    local file_path=$1
+
+    while IFS= read -r package || [ -n "$package" ]; do
+        if [[ -z "$package" || "$package" =~ ^# ]]; then
+            continue
+        fi
+
+        if [[ "$package" == *":"* ]]; then
+            pkg_name=$(echo "$package" | cut -d':' -f1)
+            pkg_os=$(echo "$package" | cut -d':' -f2)
+
+            if [[ "$(system::os_alias)" == "$pkg_os" ]]; then
+                system::install_package "$pkg_name"
+            fi
+        else
+            system::install_package "$package"
+        fi
+    done <"$file_path"
+}
+
+load_linux_repositories() {
+    if ! system::is_linux; then
+        return
+    fi
+
+    system::install_package "software-properties-common"
+
+    # OBS
+    add-apt-repository ppa:obsproject/obs-studio --yes
+}
+
+set_zsh_shell() {
+    if [[ "$SHELL" == *"zsh"* ]]; then
+        system::print_success "zsh is already the current shell"
+        return 0
+    fi
+
+    if system::is_linux; then
+        sudo chsh -s /usr/share/zsh
+    else
+        chsh -s /bin/zsh
+    fi
+}
+
+install_references() {
+    system::print_working "Creating symlinks..."
+
+    # .dotfiles.config
+    local dotfiles_config_path="$HOME/.dotfiles.config"
+    local dotfiles_config_source_path="$DOTFILES_PATH/shell/.dotfiles.config"
+
+    if [ ! -f "$dotfiles_config_path" ]; then
+        cp "$dotfiles_config_source_path" "$dotfiles_config_path"
+    fi
+
+    # tmux config
+    local tmux_config_path="$HOME/.tmux.conf"
+    local tmux_config_source_path="$DOTFILES_PATH/tmux/.tmux.conf"
+
+    ln -sf "$tmux_config_source_path" "$tmux_config_path"
+
+    # kitty config
+    local kitty_config_path="$HOME/.config/kitty/kitty.conf"
+    local kitty_config_source_path="$DOTFILES_PATH/shell/.kitty.conf"
+
+    mkdir -p "$HOME/.config/kitty"
+    ln -sf "$kitty_config_source_path" "$kitty_config_path"
+
+    # Bash references
+    add_script_source_reference "$DOTFILES_PATH/shell/bash/.bashrc" "$HOME/.bashrc"
+
+    # Zsh references
+    add_script_source_reference "$DOTFILES_PATH/shell/zsh/.zshrc" "$HOME/.zshrc"
+    add_script_source_reference "$DOTFILES_PATH/shell/zsh/.zshenv" "$HOME/.zshenv"
+
+    # Git symlink
+    ln -sf "$DOTFILES_PATH/git/.gitconfig" "$HOME/.gitconfig"
+
+    # Ssh reference
+    local system_config_source_path="$DOTFILES_PATH/private/ssh/config"
+    if [ -f "$system_config_source_path" ]; then
+        mkdir -p "$HOME/.ssh"
+        local system_config_path="$HOME/.ssh/config"
+        local ssh_config_content="Include $system_config_source_path\n\n"
+        
+        if [ ! -f "$system_config_path" ]; then
+            echo -e "$ssh_config_content" >"$system_config_path"
+        elif ! grep -q "$ssh_config_content" "$system_config_path"; then
+            echo "$ssh_config_content" >>"$system_config_path"
+        fi
+    fi
+
+    system::print_success "Symlinks created"
+}
+
+add_script_source_reference() {
+    local dotfiles_file=$1
+    local original_file=$2
+    local append_content="\nsource ${dotfiles_file}\n"
+
+    if [ ! -f "$original_file" ]; then
+        echo -e "$append_content" >"$original_file"
+    elif ! grep -q "$dotfiles_file" "$original_file"; then
+        echo -e "$append_content" >>"$original_file"
+    fi
+}

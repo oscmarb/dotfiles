@@ -1,0 +1,70 @@
+#!/bin/bash
+
+linux::install_package() {
+    local exit_code=1
+
+    if linux::is_package_available_in_apt $1; then
+        system::execute sudo apt install -y $1
+        exit_code=$?
+    elif linux::is_package_available_in_snap $1; then
+        system::execute snap install $1
+        exit_code=$?
+    elif system::is_package_available_in_cargo $1; then
+        system::execute "$(system::cargo_path) install --locked $1"
+        exit_code=$?
+    else
+        system::print_package_not_found "$1"
+        return 1
+    fi
+
+    if [[ $exit_code -ne 0 ]]; then
+        system::print_failed_to_install_package "$1"
+        return $exit_code
+    fi
+
+    system::print_package_installed "$1"
+}
+
+linux::update() {
+    system::execute sudo apt update
+}
+
+linux::upgrade() {
+    system::execute sudo apt upgrade -y
+}
+
+linux::is_package_installed() {
+    linux::is_apt_package_installed "$1" || linux::is_snap_package_installed "$1" || system::is_cargo_package_installed $1
+}
+
+linux::is_apt_package_installed() {
+    system::execute_silently "apt list --installed 2>/dev/null | grep -q \"^$1/\""
+}
+
+linux::is_snap_package_installed() {
+    if linux::is_snap_installed; then
+        system::execute_silently snap list "$1"
+    fi
+
+    return $FALSE
+}
+
+linux::is_package_available_in_snap() {
+    if linux::is_snap_installed; then
+        system::execute_silently snap find "$1" | grep -q "^$1 "
+    fi
+
+    return $FALSE
+}
+
+linux::is_snap_installed() {
+    if system::is_docker_container; then
+        return $FALSE
+    fi
+
+    system::execute_silently command -v snap
+}
+
+linux::is_package_available_in_apt() {
+    system::execute_silently apt-cache show "$1"
+}

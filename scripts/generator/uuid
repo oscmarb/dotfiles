@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Generate uuid
+##?
+##? Usage:
+##?   uuid [--elements=<n>]
+##?
+##? Options:
+##?   -h --help             Show screen.
+##?   -e --elements <n>     Number of elements to generate [default: 1].
+##?
+##? Example:
+##?   uuid 10
+docs::parse "$@"
+
+system::repeat "uuidgen | tr '[:upper:]' '[:lower:]'" "$elements"

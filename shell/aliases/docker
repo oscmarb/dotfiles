@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# DOCKER
+alias ds='docker stop '
+alias dsa='docker stop $(docker ps -a -q)'
+alias dpsa='docker ps -a'
+alias drc='docker rm '
+alias drac='dr $(docker ps -a -q)'
+alias dri='docker rmi '
+alias drai='dri $(docker images -a -q)'
+alias di='docker images'
+
+# DOCKER COMPOSE
+alias dcu='docker-compose up -d'     # up
+alias dcs='docker-compose stop'      # stop
+alias dcb='docker-compose build'     # build
+alias dcbu='dcb && dcu'              # build & up
+alias dcsbu='dcs && sleep 1 && dcbu' # stop, build & up
+alias dcr='dcs && sleep 1 && dcu'    # restart => stop & up
+
+# Arguments: container name & shell type (bash by default)
+de() {
+	docker exec -it $1 ${2:-bash}
+}
+
+# Argument: container name & shell type (bash by default)
+# docker-compose up & exec container
+dcue() {
+	dcu && de $@
+}

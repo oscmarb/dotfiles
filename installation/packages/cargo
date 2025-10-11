@@ -1,0 +1,21 @@
+#!/bin/bash
+
+_is_cargo_macos_installed() {
+    if [[ -d "$HOME/.cargo" ]]; then
+        return "$TRUE"
+    fi
+
+    return "$FALSE"
+}
+
+_install_cargo_macos() {
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+}
+
+_is_cargo_linux_installed() {
+    _is_cargo_macos_installed
+}
+
+_install_cargo_linux() {
+    _install_cargo_macos
+}

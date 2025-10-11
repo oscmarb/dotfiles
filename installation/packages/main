@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Source all package installation scripts automatically
+for script in "$DOTFILES_PATH"/installation/packages/*; do
+    if [[ -f "$script" && "$script" != "$DOTFILES_PATH/installation/packages/main" ]]; then
+        source "$script"
+    fi
+done

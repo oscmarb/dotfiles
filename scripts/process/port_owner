@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Prints the owner for a port
+##?
+##? Usage:
+##?   port_owner <port>
+docs::parse "$@"
+
+lsof -n -i4:${port} | grep LISTEN

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Optimize an image preserving the original
+##?
+##? Usage:
+##?   optimize <file_name>
+##?
+##? Options:
+##?   -t --thumb Optimize for thumbnail
+docs::parse "$@"
+
+if [[ "$thumb" == "true" ]]; then
+    extraOptions+=" --size=250"
+fi
+
+jpegoptim -t $file_name $extra_options
+
+echo "⚡️ File $file_name optimized!"

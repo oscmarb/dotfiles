@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+export DOTFILES_PATH="$HOME/.dotfiles"
+
+source "$DOTFILES_PATH/shell/.shellrc"
+source "$DOTFILES_PATH/installation/install_utils"
+
+install_references
+tmux source ~/.tmux.conf 2>/dev/null || true
+touch "$HOME/.hushlogin"

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+_is_oh-my-zsh_macos_installed() {
+    if [[ -d "$HOME/.oh-my-zsh" ]]; then
+        return "$TRUE"
+    fi
+
+    return "$FALSE"
+}
+
+_install_oh-my-zsh_macos() {
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+}
+
+_is_oh-my-zsh_linux_installed() {
+    _is_oh-my-zsh_macos_installed
+}
+
+_install_oh-my-zsh_linux() {
+    _install_oh-my-zsh_macos
+}

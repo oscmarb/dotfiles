@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Show the private ip
+#?? 1.0.0
+##?
+##? Usage:
+##?   private_ip
+docs::parse "$@"
+
+ifconfig | grep "inet" | awk '{print $2}'

@@ -1,0 +1,85 @@
+#!/bin/bash
+
+alias ai="ask_ai"
+alias q="~/.local/bin/q"
+alias qchat="~/.local/bin/qchat"
+
+ask_bedrock() {
+	local prompt_text="$1"
+	local response_path=$(mktemp ${TMPDIR}XXXXXXXXXX)
+	local message=$(jq -n --arg prompt_text "$prompt_text" \
+		'{
+			"max_tokens": 130000,
+			"anthropic_version": "bedrock-2023-05-31",
+            "messages": [{
+				"role": "user",
+				"content": ($prompt_text)
+			}]
+          }')
+
+	aws bedrock-runtime invoke-model \
+		--profile cline-profile \
+		--model-id us.anthropic.claude-3-7-sonnet-20250219-v1:0 \
+		--body "$message" \
+		--cli-binary-format raw-in-base64-out \
+		--no-cli-pager \
+		"$response_path" >/dev/null
+
+	cat "$response_path" | jq -r '.content[0].text'
+	rm -f "$response_path" 2>/dev/null
+}
+
+can_ask_gemini() {
+	if [ -z "$GEMINI_API_KEY" ]; then
+		return $FALSE
+	fi
+
+	return $TRUE
+}
+
+ask_gemini() {
+	local prompt_text="$1"
+	local model="${2:-gemini-2.0-flash}"
+
+	if [ -n "$GEMINI_API_KEY" ]; then
+		local message=$(jq -n --arg prompt_text "$prompt_text" \
+			'{
+            "contents": [{
+              "parts": [{
+                "text": ($prompt_text)
+              }]
+            }]
+          }')
+
+		local response=$(curl -s "https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=$GEMINI_API_KEY" \
+			-H 'Content-Type: application/json' \
+			-X POST \
+			-d "$message")
+
+		suggestions=$(printf '%s' "$response" | jq -R -s 'fromjson? | .candidates[0].content.parts[0].text // empty')
+
+		if [ -n "$suggestions" ]; then
+			printf '%s' "$suggestions" | jq -r '.'
+		else
+			echo "Error: Failed to get suggestions from Gemini"
+
+			if [ -n "$response" ]; then
+				echo "$response"
+			fi
+
+			return 1
+		fi
+	else
+		system::print_error "GEMINI_API_KEY environment variable is not set"
+		return 1
+	fi
+}
+
+ask_ai() {
+	if can_ask_gemini; then
+		ask_gemini "$*"
+		return $?
+	fi
+
+	ask_bedrock "$*"
+}

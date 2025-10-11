@@ -1,0 +1,48 @@
+#!/bin/bash
+
+export FZF_DEFAULT_OPTS="| tr -d '\n'"
+
+# Project paths, used to open projects
+export PROJECT_PATHS=(
+  "$HOME/Documents/projects/own"
+  "$HOME/Documents/projects/other"
+  "$HOME/Documents/projects/test"
+  "$HOME/Documents/projects/workspace"
+  "$HOME/Documents/projects/3p"
+)
+
+export TERM=xterm-256color
+
+# Boolean values
+export TRUE=0
+export FALSE=1
+
+# Colors
+export BLUE='\033[0;34m'
+export RED='\033[0;31m'
+export NC='\033[0m' # No color
+
+# Editor env variable
+if command -v cursor &>/dev/null; then
+  export EDITOR=cursor
+elif command -v code &>/dev/null; then
+  export EDITOR=code
+elif command -v idea &>/dev/null; then
+  export EDITOR=idea
+else
+  export EDITOR=nano
+fi
+
+# Source all aliases
+source "$DOTFILES_PATH/shell/aliases/_main"
+source "$DOTFILES_PATH/scripts/_main"
+
+### CUSTOM CONFIG LOADING
+if [[ -f "$HOME/.dotfiles.config" ]]; then
+  source "$HOME/.dotfiles.config"
+fi
+
+### PACKAGES LOADING
+if [[ -f "$HOME/.cargo/env" ]]; then
+  . "$HOME/.cargo/env"
+fi

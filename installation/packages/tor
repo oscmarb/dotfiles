@@ -1,0 +1,9 @@
+#!/bin/bash
+
+_is_tor_macos_installed() {
+    system::is_package_installed "tor-browser"
+}
+
+_install_tor_macos() {
+    system::install_package "tor-browser"
+}

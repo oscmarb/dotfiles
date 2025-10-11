@@ -1,0 +1,22 @@
+#!/bin/bash
+
+_make_custom() {
+	local args="${words[@]:1}"
+	local option=$(system::get_option_value "-f" "$args")
+
+	if [ -n "$option" ]; then
+		_make "$args"
+		return $?
+	fi
+
+	_make "$args"
+
+	local no_commit_file_name=$(system::no_commit_file_name "Makefile")
+
+	if [[ -f "$no_commit_file_name" ]]; then
+		local targets=($(grep -E '^[a-zA-Z0-9_-]+:' "$no_commit_file_name" | cut -d: -f1))
+		compadd -a targets
+	fi
+}
+
+compdef _make_custom make

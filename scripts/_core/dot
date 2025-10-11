@@ -1,0 +1,89 @@
+#!/usr/bin/env zsh
+
+dot() {
+    if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+        docs::parse "$@"
+    fi
+
+    local args=("$@")
+    local extra_args=()
+    local length=${#args[@]}
+    args::has_no_args "$@"
+    local has_no_args=$?
+
+    while [ $length -gt 0 ]; do
+        # Try current args as full path
+        if script_exist "${args[@]}"; then
+            eval "$(build_path "${args[@]}") ${extra_args[*]}"
+            return $?
+        fi
+
+        if context_exist "${args[@]}"; then
+            if [ ${#extra_args[@]} -gt 0 ]; then
+                system::print_error "Script or context not found"
+                return 1
+            fi
+
+            print -z -- "$(fzf_prompt "${args[@]}")"
+
+            return $?
+        fi
+
+        # Move last argument to extra_args and try again
+        extra_args=("${args[-1]}" "${extra_args[@]}")
+        args=(${args[1, $((length - 1))]})
+        length=${#args[@]}
+    done
+
+    if [[ $has_no_args -eq 0 ]]; then
+        print -z -- "$(fzf_prompt)"
+        return 0
+    fi
+
+    system::print_error "Script or context not found"
+}
+
+list_scripts_and_contexts() {
+    find "$1" -mindepth 1 -maxdepth 1 ! -name '_*' | sort -u
+}
+
+fzf_prompt() {
+    local current_path=$(build_path "$@")
+    local next_paths=$(list_scripts_and_contexts "$current_path")
+
+    local option_path="$(
+        echo "$next_paths" |
+            while read -r full_path; do
+                echo -e "$full_path\t$(basename "$full_path")"
+            done |
+            fzf \
+                --height 100% \
+                --with-nth=2 \
+                --delimiter='\t' \
+                --preview='p=$(echo {} | cut -f1); [[ -f "$p" ]] && "$p" -h || echo "Content:\n" && find "$p" -mindepth 1 -maxdepth 1 ! -name "_*" -exec basename \{\} \; | sort -u' |
+            cut -f1
+    )"
+
+    if [[ -z "$option_path" ]]; then
+        return 1
+    fi
+
+    if [[ -f "$option_path" ]]; then
+        echo "dot $@ $(basename "$option_path")"
+        return
+    fi
+
+    fzf_prompt "$@" "$(basename $option_path)"
+}
+
+script_exist() {
+    [[ -f "$(build_path "$@")" ]]
+}
+
+context_exist() {
+    [[ -d "$(build_path "$@")" ]]
+}
+
+build_path() {
+    echo "${DOTFILES_PATH}/scripts$(printf "/%s" "$@")"
+}

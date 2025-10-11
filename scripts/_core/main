@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Source all scripts
+for script in "$DOTFILES_PATH"/scripts/_core/*; do
+    if [[ -f "$script" && "$script" != "$DOTFILES_PATH/scripts/_core/main" ]]; then
+        source "$script"
+    fi
+done

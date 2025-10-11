@@ -1,0 +1,260 @@
+#!/bin/bash
+
+alias g='git'
+
+alias gf='git fetch'
+alias gs='git status'
+alias gl='git_log'
+alias gcb="git_current_branch"
+
+# List all local branches in the current repository. The active branch will be highlighted with an asterisk (*).
+alias gb="git branch"
+
+# Forcefully deletes (-D) a local branch, even if its changes have not been merged.
+alias gbd='git branch -D'
+
+# Lists all remote-tracking (-r) branches that your local repository is aware of. It does not show your local branches.
+alias gbr='git branch -r'
+
+# Lists all (-a) branches: both local and remote-tracking branches. It's a combination of 'git branch' and 'git branch -r'
+alias gba='git branch -a'
+
+# Deletes a branch on the remote repository 'origin'.
+alias gbrd='git push origin --delete'
+
+alias gch='git_checkout'
+alias gchm='git_checkout main'
+alias gchb='git checkout -b'
+
+alias ga='git add -A'
+alias gc='git commit -m'
+alias gac='ga && gc'
+alias gchmpull='git_checkout main && gpull'
+alias gchpull='git_checkout && gpull'
+alias gcpush='git_commit_push'         # commit & push
+alias gacpush='git_append_commit_push' # add, commit & push
+
+# Resets the current branch to the last commit (HEAD), discarding
+# all uncommitted changes in the working directory and staging area.
+# It uses a wrapper 'confirm_action' to ask for confirmation before running
+# this potentially destructive command.
+alias gr='confirm_action "git reset --hard" "Are you sure you want to reset the current branch to the latest commit?"'
+
+alias gst='git stash'
+alias gstl='git stash list'
+alias gstp='git stash pop'
+
+# Command: git stash apply <stash>
+# Description: Applies a stash (the most recent one by default) but does not
+# remove it from the stash list.
+alias gsta='git stash apply'
+
+# Shows differences between the working directory and the staging area (index). Displays all changes that have not yet been staged.
+alias gd='git diff'
+
+# Shows differences between the staging area (index) and the last commit (HEAD). Displays all changes that have been staged for the next commit.
+alias gdc='git diff --cached'
+
+# Shows differences between the staging area (index) and the last commit (HEAD). Displays all changes that have been staged for the next commit.
+alias gds='git diff --staged'
+
+alias gcm='git_commit_message'
+alias gcmc='git_commit_message_copy'
+
+alias gcheck='git_commit_check'
+
+gpull() {
+    git pull origin "$(git_current_branch)"
+}
+
+gpush() {
+    git push origin "$(git_current_branch)"
+}
+
+# Uses an AI model to analyze Git changes and flag potential issues.
+#
+# This function captures the output of 'git diff' and constructs a prompt
+# asking an AI to review the changes. The goal is to identify sensitive data
+# (API keys, secrets), leftover debugging code, offensive language, or other
+# content that should not be committed. It can analyze staged changes, changes
+# from the last commit, and can include extra notes for the AI.
+#
+# Usage:
+#   git_commit_check                 - Analyzes staged changes.
+#   git_commit_check stage           - Explicitly uses staged changes.
+#   git_commit_check latest          - Analyzes changes from the last commit.
+#   git_commit_check [notes]         - Includes user-provided notes in the prompt.
+#   git_commit_message stage [notes] - Combines staged changes with user notes.
+#
+git_commit_check() {
+    local diff_output
+    local user_notes
+
+    if [[ "$1" == "stage" ]]; then
+        diff_output=$(git diff HEAD | sed 's/"/\\"/g')
+        user_notes="${@:2}"
+    elif [[ "$1" == "latest" ]]; then
+        diff_output=$(git diff HEAD~1 | sed 's/"/\\"/g')
+        user_notes="${@:2}"
+    else
+        diff_output=$(git diff HEAD | sed 's/"/\\"/g')
+        user_notes="$@"
+    fi
+
+    local prompt=$(
+        cat <<EOF
+Given the following Git changes, analyze them and check if there is anything that shouldn\'t be published, such as secret keys, offensive words, debugging code, and so on.
+Changes:
+$diff_output 
+EOF
+    )
+
+    if [[ -n "$user_notes" ]]; then
+        prompt=$(
+            cat <<EOF
+$prompt
+
+Consider the following notes from the user:
+$user_notes 
+EOF
+        )
+    fi
+
+    ask_ai "$prompt"
+}
+
+# Generates a commit message using an AI based on the current Git changes.
+#
+# This function captures the output of 'git diff' and the last 10 commit messages,
+# and then uses them to construct a prompt for an AI model to generate a suitable
+# commit message that follows conventional commit standards.
+#
+# Usage:
+#   git_commit_message               - Generates a commit message from staged changes.
+#   git_commit_message stage         - Explicitly uses staged changes.
+#   git_commit_message latest        - Uses changes from the last commit.
+#   git_commit_message [notes]       - Includes user-provided notes in the prompt.
+#   git_commit_message stage [notes] - Combines staged changes with user notes.
+git_commit_message() {
+    local diff_output
+    local user_notes
+
+    if [[ "$1" == "stage" ]]; then
+        diff_output=$(git diff HEAD | sed 's/"/\\"/g')
+        user_notes="${@:2}"
+    elif [[ "$1" == "latest" ]]; then
+        diff_output=$(git diff HEAD~1 | sed 's/"/\\"/g')
+        user_notes="${@:2}"
+    else
+        diff_output=$(git diff HEAD | sed 's/"/\\"/g')
+        user_notes="$@"
+    fi
+
+    local commits_output=$(git log -n 10 --pretty=format:"%h %s" | sed 's/"/\\"/g')
+
+    local prompt="Generate a commit message based on these changes. Follow conventional commits and the existing commit structure. Only include information that you are certain about."
+
+    if [ -n "$user_notes" ]; then
+        prompt+="\n\nUser notes: ${user_notes}\n\nIf the user notes are not clear, ask for more information."
+    fi
+
+    prompt+="\n\nChanges:\n$diff_output\n\nRecent commits (last 10):\n$commits_output"
+
+    ask_ai "$prompt"
+}
+
+_fzf_action() {
+    if [ -n "$3" ]; then
+        eval "$1 $3"
+    else
+        local requested_argument
+        requested_argument=$(eval "$2" | fzf)
+        [ -n "$requested_argument" ] && eval "$1 $requested_argument"
+    fi
+}
+
+# Generates a commit message and copies it to the clipboard.
+#
+# This is a wrapper function that calls 'git_commit_message' to generate
+# a commit message from git changes. It then prints the message to the
+# console and also pipes it to the 'copy' command to make it available
+# on the system clipboard.
+# Usage:
+#   git_commit_message_copy               - Generates a commit message from staged changes.
+#   git_commit_message_copy stage         - Explicitly uses staged changes.
+#   git_commit_message_copy latest        - Uses changes from the last commit.
+#   git_commit_message_copy [notes]       - Includes user-provided notes in the prompt.
+#   git_commit_message_copy stage [notes] - Combines staged changes with user notes.
+# Usage:
+#   git_commit_message_copy [stage|latest] [notes...]
+#
+git_commit_message_copy() {
+    local commit_message=$(git_commit_message "$@")
+
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to generate a commit message"
+        return 1
+    fi
+
+    echo "$commit_message"
+    copy echo "$commit_message"
+}
+
+git_log() {
+    _is_git_repository || return 1
+
+    while :; do
+        local selection=$(git log "$@" --oneline --decorate --color=always --pretty=format:"%C(yellow)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) %C(bold blue)<%an>%Creset" |
+            fzf --ansi --reverse --no-sort \
+                --preview '
+          commit_hash=$(echo {} | awk "{print \$1}")
+          echo -e "\033[1;34mCommit:\033[0m   $(git show -s --format=%H $commit_hash)"
+          echo -e "\033[1;32mAuthor:\033[0m   $(git show -s --pretty="format:%an <%ae>" $commit_hash)"
+          echo -e "\033[1;33mDate:\033[0m     $(git show -s --format=%ad $commit_hash)"
+          echo -e "\033[1;35mTime ago:\033[0m $(git show -s --format=%cr $commit_hash)"
+          echo -e ""
+          echo -e "\033[1;37mMessage:\033[0m  $(git show -s --format=%s $commit_hash)"
+          echo -e "\n\033[1;37mFiles Changed:\033[0m"
+          git show --name-only --pretty="" $commit_hash
+        ')
+
+        [ -z "$selection" ] && break
+
+        echo "$selection" | awk '{print $1}' | xargs git show
+    done
+}
+
+git_exists_branch() {
+    git show-ref --verify --quiet "refs/heads/$1"
+}
+
+git_checkout() {
+    _is_git_repository || return 1
+
+    local branch_name=$1
+
+    if [ -n "$branch_name" ] && [ "$branch_name" = "main" ] && ! git_exists_branch "main" && git_exists_branch "mainline"; then
+        branch_name="mainline"
+    fi
+
+    _fzf_action "git switch" "git branch --sort=-committerdate | sed 's/^[* ] //'" "$branch_name"
+}
+
+git_commit_push() {
+    gc "$1" && gpush
+}
+
+_is_git_repository() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "Error: Not a git repository"
+        return 1
+    fi
+}
+
+# When the alias contains multiples commands and you want to add env variables
+# to the execution you need to create a function or the env variable will only
+# apply to the first command
+git_append_commit_push() {
+    ga
+    gcpush "$@"
+}

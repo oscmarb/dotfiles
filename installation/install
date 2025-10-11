@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e
+
+if [ ! -d "$HOME/.dotfiles/private" ]; then
+    git clone git@github.com:oscmarb/dotfiles-private.git "$HOME/.dotfiles/private" 2>/dev/null || true
+fi
+
+if [ -d "$HOME/.dotfiles/private" ]; then
+	git -C "$HOME/.dotfiles/private" pull 2>/dev/null || true
+fi
+
+export DOTFILES_PATH="$HOME/.dotfiles"
+
+source "$DOTFILES_PATH/shell/.shellrc"
+source "$DOTFILES_PATH/installation/install_utils"
+
+confirm_verbose
+select_installation_type
+
+system::update
+system::upgrade
+
+load_linux_repositories
+system::update true
+
+install_packages
+set_zsh_shell
+
+source "$DOTFILES_PATH/installation/install_references"

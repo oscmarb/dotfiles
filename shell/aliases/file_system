@@ -1,0 +1,140 @@
+#!/bin/bash
+
+alias .1='..'
+alias .2='...'
+alias .3='....'
+alias .4='.....'
+
+alias lsf='ls -lhp | grep -v "/$"' # List files (first level only)
+alias lsd='ls -lhd */'             # List directories (first level only)
+alias lt='ls -ltr'                 # Sort by time, newest last
+
+alias mkdir="mkdir -p"
+alias cp='cp -i'
+alias mv='mv -i'
+alias rm='rm -i'
+alias rmdir="rm -rf"
+
+# Quick file search
+qf() {
+    if [ -z "$1" ]; then
+        system::print_error "Usage: qf <filename>"
+        return 1
+    fi
+
+    find . -name "$1" -type f 2>/dev/null
+}
+
+# Find and copy path
+f() {
+    local selection=$(find . $@ 2>/dev/null | fzfp)
+
+    if [ -n "$selection" ]; then
+        printf '%q' "$(realpath "$selection")" | pbcopy >/dev/null
+        echo "${BLUE}$(realpath "$selection")${NC} path copied to clipboard"
+    fi
+}
+
+# Find directory and copy path
+fdd() {
+    f -type d $@
+}
+
+# Find file and copy path
+ff() {
+    f -type f $@
+}
+
+# Change to directory with fzf
+cdd() {
+    local directories=$(ls -d -- */ 2>/dev/null)
+
+    if [ -z "$directories" ]; then
+        echo "No directories found"
+        return 1
+    fi
+
+    local directory=$(echo "$directories" | fzfp)
+    local exit_code=$?
+
+    if [ "$exit_code" -ne 0 ]; then
+        return $exit_code
+    fi
+
+    if [ -z "$directory" ]; then
+        return 1
+    fi
+
+    cd "$directory"
+}
+
+# Change directory recursively
+cdr() {
+    while true; do
+        cdd
+        local exit_code=$?
+
+        if [ "$exit_code" -ne 0 ]; then
+            return $exit_code
+        fi
+    done
+}
+
+# Change directory and list contents
+cdl() {
+    if [ -z "$1" ]; then
+        echo "Usage: cdl <directory>"
+        return 1
+    fi
+
+    cd "$1" && ls -lh
+}
+
+# Change directory and list contents
+cddl() {
+    cdd && ls -lh
+}
+
+# Create directory and enter it
+mkcd() {
+    if [ -z "$1" ]; then
+        echo "Usage: mkcd <directory>"
+        return 1
+    fi
+
+    mkdir -p "$1" && cd "$1"
+}
+
+# Quick backup of a file
+backup() {
+    if [ -z "$1" ]; then
+        echo "Usage: backup <file>"
+        return 1
+    fi
+
+    cp "$1" "$1.bak"
+}
+
+# Count files in directory
+countf() {
+    find "${1:-.}" -type f | wc -l
+}
+
+# Count directories in directory
+countd() {
+    find "${1:-.}" -type d | wc -l
+}
+
+# Count files and directories
+count() {
+    find "${1:-.}" | wc -l
+}
+
+# Show total size of each directory and file in the current directory
+dir_size() {
+    echo "Total size of each directory and file in the current directory:"
+    du -sh * 2>/dev/null
+    echo ""
+    echo "Total size of the current directory:"
+    du -sh . 2>/dev/null
+}

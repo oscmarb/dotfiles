@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Downloads a video audio in the current directory
+##?
+##? Usage:
+##?   download_mp3 <url>
+docs::parse "$@"
+
+yt-dlp -x -S ext "$url"

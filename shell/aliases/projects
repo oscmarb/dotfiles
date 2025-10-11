@@ -1,0 +1,73 @@
+#!/bin/bash
+
+alias pl="project::list"
+alias po="project::open"
+alias pi="project::initialize"
+
+project::list() {
+    if [ -z "${PROJECT_PATHS}" ]; then
+        return 1
+    fi
+
+    for root_project_dir in ${PROJECT_PATHS[@]}; do
+        if [ ! -d "$root_project_dir" ]; then
+            continue
+        fi
+
+        while read -r project_name; do
+            project_dir="$root_project_dir/$project_name"
+
+            if [ -d "$project_dir" ]; then
+                echo "$project_dir"
+            fi
+        done < <(ls -1 "$root_project_dir" 2>/dev/null)
+    done
+}
+
+project::open() {
+    selection=$1
+    local projects_lists=$(project::list)
+
+    if [ -n "$selection" ]; then
+        escaped_selection=$(echo "$selection" | sed 's/\//\\\//g')
+
+        if echo "$projects_lists" | grep -q "$escaped_selection$"; then
+            $EDITOR "$selection"
+            return $?
+        fi
+    fi
+
+    if [ -z "$selection" ]; then
+        selection=$(echo "$projects_lists" | xargs basename | fzf)
+    fi
+
+    if [ -z "$selection" ]; then
+        return 1
+    fi
+
+    echo "$projects_lists" | while read -r project_path; do
+        if [ "$(basename "$project_path")" = "$selection" ]; then
+            $EDITOR "$project_path"
+            return $?
+        fi
+    done
+
+    system::print_error "$selection project not found"
+    return 1
+}
+
+project::initialize() {
+    local current_dir="${1:-$(pwd)}"
+    local project_name=$(basename "$current_dir")
+    local project_config_path="$DOTFILES_PATH/private/projects/$project_name"
+
+    if [ ! -d "$project_config_path" ]; then
+        return 0
+    fi
+
+    for element_path in "$project_config_path"/*; do
+        local no_commit_element_path=$(system::no_commit_file_name "$element_path")
+        cp -r "$element_path" "$current_dir/$(basename "$no_commit_element_path")"
+    done
+
+}

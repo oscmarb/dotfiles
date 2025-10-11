@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? List opened processes. Only shows the name.
+##?
+##? Usage:
+##?   list
+docs::parse "$@"
+
+ps axc | awk 'NR > 1' | awk '{print substr($0,index($0,$5))}' | sort -u

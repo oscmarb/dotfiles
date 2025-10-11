@@ -1,0 +1,390 @@
+#!/bin/bash
+
+DOTFILES_INSTALLATION_TYPE_OPTIONS=("Personal" "Work")
+DOTFILES_ALREADY_UPDATED=false
+DOTFILES_ALREADY_UPGRADED=false
+DOTFILES_NO_COMMIT_SUFFIX=".no-commit"
+
+system::install_packages() {
+    for package in "$@"; do
+        system::install_package "$package"
+    done
+
+    return 0
+}
+
+system::install_package() {
+    if [[ $# -gt 1 ]]; then
+        system::print_error "Only one package can be installed at a time"
+        return 1
+    fi
+
+    if system::is_custom_package_skipped "$1"; then
+        system::print_package_not_available "$1"
+        return 0
+    fi
+
+    if system::is_package_installed "$1"; then
+        system::print_package_already_installed "$1"
+        return 0
+    fi
+
+    system::print_installing_package "$1"
+
+    if system::is_custom_package_available "$1"; then
+        system::install_custom_package "$1"
+        local exit_code=$?
+
+        if [[ $exit_code -ne 0 ]]; then
+            system::print_failed_to_install_package "$1"
+            return $exit_code
+        fi
+
+        system::print_package_installed "$1"
+
+        return $exit_code
+    fi
+
+    system::execute "$(system::os_alias)::install_package $@"
+    return $?
+}
+
+system::is_package_available() {
+    system::is_custom_package_available "$1" || $(system::os_alias)::is_package_available $@
+}
+
+system::is_package_installed() {
+    system::is_custom_package_installed "$1" || $(system::os_alias)::is_package_installed $@
+}
+
+system::update() {
+    if system::is_env_true "$DOTFILES_ALREADY_UPDATED" && ! system::is_env_true "$1"; then
+        return 0
+    fi
+
+    DOTFILES_ALREADY_UPDATED=true
+    system::execute "$(system::os_alias)::update $@"
+}
+
+system::upgrade() {
+    if [[ "$DOTFILES_ALREADY_UPGRADED" == "true" ]] && ! system::is_env_true "$1"; then
+        return 0
+    fi
+
+    DOTFILES_ALREADY_UPGRADED=true
+    system::execute "$(system::os_alias)::upgrade $@"
+}
+
+system::os_alias() {
+    if [[ -n "${DOTFILES_OS}" ]]; then
+        echo "${DOTFILES_OS}"
+        return
+    fi
+
+    local os=$(uname)
+
+    if [[ "$os" == "Linux" ]]; then
+        export DOTFILES_OS="linux"
+        echo "linux"
+        return
+    fi
+
+    if [[ "$os" == "Darwin" ]]; then
+        export DOTFILES_OS="macos"
+        echo "macos"
+        return
+    fi
+
+    echo "Unsupported operating system: $os"
+
+    return 1
+}
+
+system::print_package_already_installed() {
+    system::print_success "$1 already installed"
+}
+
+system::print_package_installed() {
+    system::print_rocket "$1 installed"
+}
+
+system::print_installing_package() {
+    system::print_working "Installing $1..."
+}
+
+system::print_package_not_found() {
+    system::print_error "$1 package not found"
+}
+
+system::print_failed_to_install_package() {
+    system::print_error "Failed to install $1"
+}
+
+system::print_package_not_available() {
+    system::print_warning "$1 package not available"
+}
+
+system::execute() {
+    if system::is_verbose_enabled || system::is_debug_enabled; then
+        system::print_debug "> $@"
+        eval "$@"
+        return $?
+    fi
+
+    system::execute_silently "$@"
+}
+
+system::execute_silently() {
+    if system::is_debug_enabled; then
+        system::print_debug "> $@"
+        eval "$@"
+        return $?
+    fi
+
+    eval "$@" >/dev/null 2>&1
+}
+
+system::print() {
+    echo "$@"
+}
+
+system::print_error() {
+    system::print "🛑 ERROR! $@"
+}
+
+system::print_success() {
+    system::print "✅ $@"
+}
+
+system::print_rocket() {
+    system::print "🚀  $@"
+}
+
+system::print_warning() {
+    system::print "⚠️  $@"
+}
+
+system::print_info() {
+    system::print "💬  $@"
+}
+
+system::print_debug() {
+    if system::is_debug_enabled; then
+        system::print "🐞  $@"
+    fi
+}
+
+system::print_working() {
+    system::print "🏗️  $@"
+}
+
+system::is_docker_container() {
+    if [ -f "/.dockerenv" ]; then
+        return $TRUE
+    fi
+
+    return $FALSE
+}
+
+system::is_cargo_package_installed() {
+    if [[ ! -f "$(system::cargo_path)" ]]; then
+        return $FALSE
+    fi
+
+    system::execute_silently "$(system::cargo_path) install --list | grep $1"
+}
+
+system::is_package_available_in_cargo() {
+    if [[ $1 == "cargo" ]]; then
+        return $FALSE
+    fi
+
+    system::execute_silently "$(system::cargo_path) search $1 | grep \"$1 = \""
+}
+
+system::cargo_path() {
+    if [[ -f "$HOME/.cargo/bin/cargo" ]]; then
+        echo "$HOME/.cargo/bin/cargo"
+        return
+    fi
+
+    if [[ -f "/usr/bin/cargo" ]]; then
+        echo "/usr/bin/cargo"
+        return
+    fi
+
+    return 1
+}
+
+system::enable_verbose() {
+    export DOTFILES_VERBOSE=true
+}
+
+system::disable_verbose() {
+    export DOTFILES_VERBOSE=false
+}
+
+system::is_verbose_enabled() {
+    if system::is_env_true "$DOTFILES_VERBOSE"; then
+        return 0
+    fi
+
+    return 1
+}
+
+system::is_debug_enabled() {
+    if system::is_env_true "$DOTFILES_DEBUG"; then
+        return 0
+    fi
+
+    return 1
+}
+
+system::is_verbose_declared() {
+    system::is_env_declared "$DOTFILES_VERBOSE"
+}
+
+system::is_force_enabled() {
+    system::is_env_true "$DOTFILES_FORCE"
+}
+
+system::is_installation_type_declared() {
+    system::is_env_declared "$DOTFILES_INSTALLATION_TYPE"
+}
+
+system::get_installation_type() {
+    echo "$DOTFILES_INSTALLATION_TYPE"
+}
+
+system::set_installation_type() {
+    if [[ ! " ${DOTFILES_INSTALLATION_TYPE_OPTIONS[@]} " =~ " $1 " ]]; then
+        system::print_error "Invalid installation type: $1"
+        return 1
+    fi
+
+    export DOTFILES_INSTALLATION_TYPE=$1
+}
+
+system::is_env_declared() {
+    if [[ -n "${1:+x}" ]]; then
+        return $TRUE
+    fi
+
+    return $FALSE
+}
+
+system::is_env_true() {
+    if [[ "$1" == "true" || "$1" == "TRUE" || "$1" == true || "$1" == TRUE || "$1" == "1" || "$1" == "yes" || "$1" == "YES" || "$1" == "y" || "$1" == "Y" || "$1" == 1 ]]; then
+        return $TRUE
+    fi
+
+    return $FALSE
+}
+
+# Useful when we don't want to fail when a package is not available
+system::is_custom_package_skipped() {
+    local package_name=$1
+    local os_alias=$(system::os_alias)
+    local function_name="_is_${package_name}_${os_alias}_available"
+
+    if [[ $(type -t "$function_name") == "function" ]]; then
+        "$function_name" "$@"
+
+        if [[ $? -ne 0 ]]; then
+            return $TRUE
+        fi
+    fi
+
+    return $FALSE
+}
+
+system::is_custom_package_available() {
+    local package_name=$1
+    local os_alias=$(system::os_alias)
+    local install_function_name="_install_${package_name}_${os_alias}"
+    local is_installed_function_name="_is_${package_name}_${os_alias}_installed"
+
+    if [[ $(type -t "$install_function_name") != "function" ]]; then
+        system::print_debug "Custom package not available: $package_name. Checked function: $install_function_name"
+        return $FALSE
+    fi
+
+    if [[ $(type -t "$is_installed_function_name") != "function" ]]; then
+        system::print_debug "Custom package not available: $package_name. Checked function: $is_installed_function_name"
+        return $FALSE
+    fi
+
+    return $TRUE
+}
+
+system::install_custom_package() {
+    local package_name=$1
+    local os_alias=$(system::os_alias)
+    local install_function_name="_install_${package_name}_${os_alias}"
+
+    system::print_debug "Installing custom package: $package_name. Calling function: $install_function_name"
+
+    system::execute "$install_function_name"
+}
+
+system::is_custom_package_installed() {
+    local package_name=$1
+
+    if ! system::is_custom_package_available "$package_name"; then
+        system::print_debug "Custom package is not available: $package_name"
+        return $FALSE
+    fi
+
+    local os_alias=$(system::os_alias)
+    local is_installed_function_name="_is_${package_name}_${os_alias}_installed"
+
+    system::execute_silently "$is_installed_function_name"
+}
+
+system::is_linux() {
+    if [[ "$(system::os_alias)" == "linux" ]]; then
+        return $TRUE
+    fi
+
+    return $FALSE
+}
+
+system::repeat() {
+    local command=$1
+    local times=$2
+
+    for ((i = 0; i < $times; i++)); do
+        eval "$command"
+    done
+}
+
+system::no_commit_file_name() {
+    local file_path="$1"
+    local file_directory=$(dirname "$file_path")
+    local file_name=$(basename "$file_path")
+    local extension="${file_name##*.}"
+    local name="${file_name%.*}"
+    local no_commit_file_name
+
+    if [[ "$file_name" == "$extension" ]]; then
+        no_commit_file_name="${name}${DOTFILES_NO_COMMIT_SUFFIX}"
+    else
+        no_commit_file_name="${name}${DOTFILES_NO_COMMIT_SUFFIX}.${extension}"
+    fi
+
+    echo "${file_directory}/${no_commit_file_name}"
+}
+
+system::get_option_value() {
+    local option="$1"
+    local command="$2"
+    local prev=""
+
+    for arg in $(echo "$command" | tr ' ' '\n'); do
+        if [[ "$prev" == "$option" ]]; then
+            echo "$arg"
+            return
+        fi
+        prev="$arg"
+    done
+}

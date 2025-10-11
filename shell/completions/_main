@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Source all completions automatically
+for script in "$DOTFILES_PATH"/shell/completions/*; do
+    if [[ -f "$script" && "$script" != "$DOTFILES_PATH/shell/completions/_main" ]]; then
+        source "$script"
+    fi
+done

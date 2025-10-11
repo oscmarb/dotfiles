@@ -1,0 +1,50 @@
+#!/bin/bash
+
+macos::install_package() {
+    local exit_code=1
+
+    if macos::is_package_available_in_brew_cask $1; then
+        system::execute brew install --cask --force $1
+        exit_code=$?
+    elif macos::is_package_available_in_brew $1; then
+        system::execute brew install --force $1
+        exit_code=$?
+    elif system::is_package_available_in_cargo $1; then
+        system::execute "$(system::cargo_path) install --locked $1"
+        exit_code=$?
+    else
+        system::print_package_not_found "$1"
+        return 1
+    fi
+
+    if [[ $exit_code -ne 0 ]]; then
+        system::print_failed_to_install_package "$1"
+        return $exit_code
+    fi
+
+    system::print_package_installed "$1"
+}
+
+macos::update() {
+    system::execute brew update
+}
+
+macos::upgrade() {
+    system::execute brew upgrade
+}
+
+macos::is_package_installed() {
+    macos::is_brew_package_installed $1 || system::is_cargo_package_installed $1
+}
+
+macos::is_brew_package_installed() {
+    system::execute_silently brew list $1
+}
+
+macos::is_package_available_in_brew_cask() {
+    system::execute_silently brew info --cask $1
+}
+
+macos::is_package_available_in_brew() {
+    system::execute_silently brew info $1
+}

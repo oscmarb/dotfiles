@@ -1,0 +1,17 @@
+#!/bin/bash
+
+_is_dbeaver_macos_installed() {
+    system::is_package_installed "dbeaver-community"
+}
+
+_install_dbeaver_macos() {
+    system::install_package "dbeaver-community"
+}
+
+_is_dbeaver_linux_installed() {
+    system::is_package_installed "dbeaver-ce"
+}
+
+_install_dbeaver_linux() {
+    system::install_package "dbeaver-ce"
+}

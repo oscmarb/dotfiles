@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Show the public ip
+##?
+##? Usage:
+##?   public_ip
+docs::parse "$@"
+
+echo "IP v4: $(curl --silent -4 http://ipecho.net/plain)"
+echo "IP v6: $(curl --silent http://ipecho.net/plain)"

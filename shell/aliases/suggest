@@ -1,0 +1,117 @@
+#!/bin/bash
+
+alias salias="suggest_alias_for_task"
+alias stmux="suggest_tmux_shortcut"
+alias shelp="suggest_command_usage"
+
+function suggest_alias_for_task() {
+	if [ -z "$*" ]; then
+		echo "Please provide a prompt describing what you want to achieve"
+		return 1
+	fi
+
+	# Collect all alias definitions and scripts
+	alias_content=""
+	for file in "$DOTFILES_PATH"/shell/aliases/*; do
+		if [ -f "$file" ]; then
+			alias_content+="# From $(basename "$file"):"$'\n'
+			alias_content+="$(cat "$file")"$'\n'
+		fi
+	done
+
+	local prompt=$(
+		cat <<EOF
+You are a shell alias expert. Given these aliases:
+
+$alias_content
+Task: $@
+
+First, tell me if there are any EXISTING aliases that help with this task.
+Then, if needed, suggest new aliases that would be helpful.
+
+Format your response exactly like this:
+EXISTING ALIASES:
+1. alias_name: what it does
+or 'No existing aliases found for this task'
+
+SUGGESTED NEW ALIASES:
+1. alias_name='command'
+or 'No new aliases suggested'
+EOF
+	)
+
+	ask_ai "$prompt"
+}
+
+function suggest_tmux_shortcut() {
+	if [ -z "$*" ]; then
+		echo "Please provide a prompt describing what you want to achieve"
+		return 1
+	fi
+
+	local prompt=$(
+		cat <<EOF
+Given my notes about my configuration of tmux:
+
+$(cat $DOTFILES_PATH/docs/shortcuts/tmux.md)
+
+And my current tmux configuration:
+
+$(cat $DOTFILES_PATH/tmux/.tmux.conf)
+
+I want to: $@
+
+First, tell me if there are any EXISTING shortcuts that help with this task.
+Then, if needed, suggest new shortcuts that would be helpful.
+
+Format your response exactly like this:
+EXISTING SHORTCUTS:
+1. shortcut: what it does
+or 'No existing shortcuts found for this task'
+
+SUGGESTED NEW SHORTCUTS:
+1. shortcut: how can I configure it
+or 'No new shortcuts suggested'
+EOF
+	)
+
+	ask_ai "$prompt"
+}
+
+function suggest_command_usage() {
+	if [ -z "$*" ]; then
+		echo "Usage: <command> --help | help-suggest \"<question or query>\""
+		echo "Example: git --help | help-suggest \"How do I create a new branch?\""
+		return 1
+	fi
+
+	# Read help output from stdin
+	local help_output=$(cat)
+
+	if [ -z "$help_output" ]; then
+		echo "Error: No help output provided via stdin"
+		echo "Usage: <command> --help | help-suggest \"<question or query>\""
+		return 1
+	fi
+
+	local prompt=$(
+		cat <<EOF
+You are a command-line expert. I have the help output from a command and a specific question about how to use it.
+
+HELP OUTPUT:
+$help_output
+
+QUESTION: $@
+
+Please provide a clear, concise answer that:
+1. Directly addresses the question using information from the help output
+2. Provides the exact command syntax if applicable
+3. Explains any relevant options or flags
+4. Gives practical examples when helpful
+
+Format your response in a clear, easy-to-read manner with proper formatting.
+EOF
+	)
+
+	ask_ai "$prompt"
+}

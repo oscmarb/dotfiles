@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# General
+alias tls="tmux ls"
+alias tk="tmux kill-server"
+
+# Session
+alias ts="tmux_session"         # If no session is provided, fuzzy select a session. If there is only one session, attach to it immediately. If a session is provided and exists attach to it. If a session is provided and does not exist, create it.
+alias tsn="tmux_session_new"    # [<session_name>] New session; if no session name is provided, create a new session with a random name
+alias tsa="tmux_session_attach" # [<session_name>] Attach to session; if no session name is provided, fuzzy select a session. If there is only one session, attach to it immediately. If a session is provided and exists attach to it. If a session is provided and does not exist, create it.
+alias tsk="tmux_session_kill"   # [<session_name>] Kill session; if no session name is provided, fuzzy select a session. If there is only one session, kill it immediately. If a session is provided and exists kill it. If a session is provided and does not exist, do nothing.
+
+tmux_session() {
+    if [[ -z "$1" ]]; then
+        local target_session=$(tmux ls 2>/dev/null | fzf --exit-0 --select-1 --tmux | awk -F: '{print $1}')
+
+        if [[ -z "$target_session" ]]; then
+            tmux_session_new
+            return $?
+        fi
+
+        if [[ -n "$target_session" ]]; then
+            tmux_session_attach "$target_session"
+        fi
+    elif tmux has-session -t "$1" 2>/dev/null; then
+        tmux_session_attach "$1"
+    else
+        tmux_session_new "$1"
+    fi
+}
+
+tmux_session_attach() {
+    local target_session="$1"
+
+    if [[ -z "$1" ]]; then
+        target_session=$(tmux ls | fzf --exit-0 --select-1 --tmux | awk -F: '{print $1}')
+
+        if [[ -z "$target_session" ]]; then
+            return
+        fi
+    fi
+
+    if [[ -n "$TMUX" ]]; then
+        tmux switch-client -t "$1"
+    else
+        tmux attach -t "$1"
+    fi
+}
+
+tmux_session_new() {
+    if [[ -n "$TMUX" ]]; then
+        if [[ -n "$1" ]]; then
+            tmux new-session -d -s "$1" && tmux switch-client -t "$1"
+        else
+            echo "Session needs a name"
+            return 1
+        fi
+    else
+        if [[ -n "$1" ]]; then
+            tmux new-session -A -s "$1"
+        else
+            tmux new-session
+        fi
+    fi
+}
+
+tmux_session_kill() {
+    if [[ -z "$1" ]]; then
+        local target_sessions=$(tmux ls | fzf --exit-0 --select-1 --multi --tmux --bind "tab:toggle" | awk -F: '{print $1}')
+
+        if [[ -z "$target_sessions" ]]; then
+            return
+        fi
+
+        local kill_later
+        local current_session_name
+
+        if [[ -n "$TMUX" ]]; then
+            current_session_name=$(tmux display-message -p '#S')
+        fi
+
+        while IFS= read -r session; do
+            if [[ "$session" == "$current_session_name" ]]; then
+                kill_later=true
+            else
+                tmux kill-session -t "$session"
+            fi
+        done <<<"$target_sessions"
+
+        if [[ "$kill_later" == true ]]; then
+            tmux kill-session -t "$current_session_name"
+        fi
+    else
+        tmux kill-session -t "$1"
+    fi
+}

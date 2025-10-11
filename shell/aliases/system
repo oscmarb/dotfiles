@@ -1,0 +1,102 @@
+#!/bin/bash
+
+alias cl='clear'
+alias reload="omz reload && tmux source $HOME/.tmux.conf"
+alias rl="reload"
+alias fzfp="fzf --preview '$DOTFILES_PATH/fzf/preview {}'"
+alias cpenv="printenv | fzf | awk -F= '{print $2}' | tr -d '\n' | pbcopy"
+alias ubuntu-container='docker run --rm -it ubuntu:latest'
+
+copy() {
+  "$@" | pbcopy
+}
+
+make() {
+  if [[ "$*" == *"-f"* ]]; then
+    /usr/bin/make "$@"
+    return $?
+  fi
+
+  local no_commit_file_name=$(system::no_commit_file_name "Makefile")
+
+  if [ -f "$no_commit_file_name" ] && /usr/bin/make -f "$no_commit_file_name" -n "$@" &>/dev/null; then
+    /usr/bin/make -f "$no_commit_file_name" "$@"
+  else
+    /usr/bin/make "$@"
+  fi
+}
+
+shell_performance() {
+  local zsh_output=$({ time zsh -i -c exit; } 2>&1)
+
+  if [[ "$SHELL" == *"zsh"* ]]; then
+    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk 'NR == 3')
+  else
+    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk '/^real/ {print}')
+  fi
+
+  echo "--- Zsh Time ---"
+  echo "$zsh_output"
+  echo
+  echo "--- Bash Time ---"
+  echo "$bash_output"
+}
+
+update() {
+  system::update
+  system::upgrade
+  omz update
+}
+
+t() {
+  time ($@)
+}
+
+htop() {
+  if command -v btm >/dev/null 2>&1; then
+    btm "$@"
+  else
+    /bin/htop "$@"
+  fi
+}
+
+navialias() {
+  navi --query ":: $1" --best-match
+}
+
+notify() {
+  "$@"
+  set +m
+  (
+    osascript -e "display notification \"Your command has finished: $*\" with title \"Command finished\""
+    afplay /System/Library/Sounds/Ping.aiff
+  ) &
+  disown
+  set -m
+}
+
+pbcopy() {
+  if command -v xclip >/dev/null 2>&1; then
+    xclip -selection clipboard
+  else
+    /usr/bin/pbcopy
+  fi
+}
+
+pbpaste() {
+  if command -v xclip >/dev/null 2>&1; then
+    xclip -selection clipboard -o
+  else
+    /usr/bin/pbpaste
+  fi
+}
+
+# Change permissions for all files in a directory
+chrx() {
+  if [ -z "$1" ]; then
+    echo "Usage: chrx <directory>"
+    return 1
+  fi
+
+  find "$1" -type f -exec chmod +x {} \;
+}

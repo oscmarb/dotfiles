@@ -1,0 +1,29 @@
+#!/bin/bash
+
+_is_discord_linux_available() {
+    linux::is_snap_installed
+}
+
+_is_postman_linux_available() {
+    linux::is_snap_installed
+}
+
+_is_spotify_linux_available() {
+    linux::is_snap_installed
+}
+
+_is_obsidian_linux_available() {
+    linux::is_snap_installed
+}
+
+_is_visual-studio-code_linux_available() {
+    linux::is_snap_installed
+}
+
+_is_tor_linux_available() {
+    linux::is_snap_installed
+}
+
+_is_dbeaver_linux_available() {
+    linux::is_snap_installed
+}

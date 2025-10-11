@@ -1,0 +1,16 @@
+#!/bin/bash
+
+source "$DOTFILES_PATH/scripts/_core/system"
+
+git::ensure_is_not_protected_branch() {
+    local branch=$(git branch --show-current)
+    local protected_branches=("main" "master" "develop" "release" "mainline")
+
+    if [[ "${protected_branches[@]}" =~ "${branch}" ]] && ! system::is_force_enabled; then
+        echo "❌ You cannot commit directly to the '$(git branch --show-current)' branch."
+        echo "Please switch to another branch before executing the action or use DOTFILES_FORCE env variable."
+        return $FALSE
+    fi
+
+    return $TRUE
+}

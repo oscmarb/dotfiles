@@ -1,0 +1,17 @@
+#!/bin/bash
+
+arg="$1"
+
+[ -z "$arg" ] && exit 1
+
+if [ -d "$arg" ]; then
+    ls -la --color=always "$arg"
+elif file --mime "$arg" | grep -q image; then
+    chafa -s "${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES}" "$arg"
+elif file "$arg" | grep -qi pdf; then
+    pdftotext "$arg" - | head -n 100
+elif [[ "$arg" == *.md ]]; then
+    glow -s dark -w 80 "$arg" || bat --style=plain --color=always "$arg"
+elif file "$arg" | grep -q text; then
+    bat --style=numbers --theme=OneHalfDark --color=always --line-range=:500 "$arg"
+fi

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Reproduce a sound
+##?
+##? Usage:
+##?   reproduce [<sound_name>] [<times>]
+docs::parse "$@"
+
+select_sound() {
+    SOUNDS_DIR="$DOTFILES_PATH/private/media/sounds"
+    SOUNDS_MAP=()
+
+    # Build the sounds map
+    while IFS= read -r sound_file; do
+        sound_name=$(basename "$sound_file" .mp3)
+        SOUNDS_MAP+=("$sound_name:$sound_file")
+    done < <(find "$SOUNDS_DIR" -type f -name "*.mp3")
+
+    if [ ${#SOUNDS_MAP[@]} -eq 0 ]; then
+        echo "No sounds found in $SOUNDS_DIR"
+        exit 1
+    fi
+
+    # Let user select sound via fzf
+    selected=$(printf "%s\n" "${SOUNDS_MAP[@]}" | cut -d':' -f1 | fzf --prompt="Select a sound to play: ")
+
+    if [ -z "$selected" ]; then
+        return 1
+    fi
+
+    echo "$selected"
+}
+
+sound_name=${sound_name:-}
+times=${times:-1}
+
+if [ -z "$sound_name" ]; then
+    sound_name=$(select_sound)
+fi
+
+system::repeat "afplay $DOTFILES_PATH/media/sounds/$sound_name.mp3" "$times"

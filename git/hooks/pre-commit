@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source "$DOTFILES_PATH/scripts/_core/git"
+
+git::ensure_is_not_protected_branch

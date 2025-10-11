@@ -1,0 +1,54 @@
+[user]
+name = Óscar Martínez
+email = oscmarb@gmail.com
+
+[includeIf "gitdir:/Users/oscmarb/"]
+path = /Users/oscmarb/.dotfiles/private/git/.gitconfig.work
+
+[includeIf "gitdir:/Volumes/workplace/"]
+path = /Users/oscmarb/.dotfiles/private/git/.gitconfig.work
+
+[fetch]
+prune = true
+
+[push]
+default = simple
+autoSetupRemote = true
+
+[color]
+diff = auto
+status = auto
+branch = auto
+ui = true
+
+[core]
+excludesfile = ~/.dotfiles/git/.gitignore
+attributesfile = ~/.dotfiles/git/.gitattributes
+hooksPath = ~/.dotfiles/git/hooks
+
+[apply]
+whitespace = fix
+
+[pull]
+rebase = true
+
+[init]
+defaultBranch = main
+
+[amazon]
+append-cr-url = true
+
+[rerere]
+enabled = true
+
+[filter "lfs"]
+clean = git-lfs clean -- %f
+smudge = git-lfs smudge -- %f
+process = git-lfs filter-process
+required = true
+
+[alias]
+hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+type = cat-file -t
+dump = cat-file -p
+dag = log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)%an <%ae>%C(reset) %C(magenta)%cr%C(reset)%C(auto)%d%C(reset)%n%s' --date-order

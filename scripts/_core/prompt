@@ -1,0 +1,92 @@
+#!/bin/bash
+
+prompt::ask_yes_no() {
+    local question=$1
+    local default=${2:-"n"}
+    local default_upper=$(echo "$default" | tr '[:lower:]' '[:upper:]')
+    local options="y/N"
+
+    if [[ "$default" == "y" ]]; then
+        options="Y/n"
+    fi
+
+    if [[ -n "$ZSH_VERSION" ]]; then
+        read "answer?$question [$options]"
+    else
+        read -p "$question [$options] " answer
+    fi
+
+    if [[ -z "$answer" ]]; then
+        answer=$default
+    elif [[ ! "$answer" =~ ^[YyNn]$ ]]; then
+        system::print_error "Invalid input. Please enter y or n"
+        prompt::ask_yes_no "$question" "$default"
+        return $?
+    fi
+
+    case "$answer" in
+    [Yy]*)
+        return $TRUE
+        ;;
+    *)
+        return $FALSE
+        ;;
+    esac
+}
+
+prompt::select_option() {
+    local question=$1
+    shift
+    local options=("$@")
+    local total_options=${#options[@]}
+
+    if [[ $total_options -eq 0 ]]; then
+        system::print_error "No options provided"
+        return 1
+    fi
+
+    system::print "$question"
+
+    for i in "${!options[@]}"; do
+        system::print "$(($i + 1))) ${options[$i]}"
+    done
+
+    while true; do
+        if [[ -n "$ZSH_VERSION" ]]; then
+            read "selected?Select an option"
+        else
+            read -p "Select an option: " selected
+        fi
+
+        if [[ "$selected" =~ ^[0-9]+$ ]]; then
+            if ((selected >= 1 && selected <= total_options)); then
+                return $(($selected - 1))
+            fi
+        fi
+
+        system::print_error "Please enter a number between 1 and $total_options"
+    done
+}
+
+prompt::ask_input() {
+    local question=$1
+    local default=${2:-""}
+
+    if [[ -n "$default" ]]; then
+        question="$question [$default]: "
+    else
+        question="$question: "
+    fi
+
+    if [[ -n "$ZSH_VERSION" ]]; then
+        read "answer?$question"
+    else
+        read -p "$question" answer
+    fi
+
+    if [[ -z "$answer" ]]; then
+        answer=$default
+    fi
+
+    echo "$answer"
+}

@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Downloads a video transcript and saves it to Downloads folder
+##?
+##? Usage:
+##?   download_transcript <url>
+docs::parse "$@"
+
+# Get the Downloads folder path
+downloads_dir="$HOME/Downloads"
+
+# Get video title using yt-dlp
+echo "Getting video information..."
+video_title=$(yt-dlp --get-title "$url" 2>/dev/null)
+
+if [[ -z "$video_title" ]]; then
+	echo "Error: Could not retrieve video title"
+	exit 1
+fi
+
+# Clean the title to make it a valid filename
+# Remove special characters and replace spaces with underscores
+clean_title=$(echo "$video_title" | sed 's/[^a-zA-Z0-9._-]/_/g' | sed 's/__*/_/g' | sed 's/^_//' | sed 's/_$//')
+
+# Set output filename
+output_file="$downloads_dir/${clean_title}"
+echo "Video: $video_title"
+echo "Downloading transcript..."
+
+# Download transcript using yt-dlp
+yt-dlp --write-sub --write-auto-sub --sub-format srt --skip-download "$url" -o "$output_file"
+
+if [[ $? -eq 0 ]]; then
+	output_file="${output_file}.en.srt"
+	echo ""
+	echo "Transcript downloaded in $output_file."
+	echo "Sanitizing..."
+
+	python3 "$DOTFILES_PATH/aux/str_to_txt.py" "$output_file" -o "$output_file"
+	echo ""
+	system::print_success "Transcript sanitized."
+else
+	echo ""
+	system::print_error "Could not download transcript"
+	exit 1
+fi

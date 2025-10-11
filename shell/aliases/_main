@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Source all aliases automatically
+for script in "$DOTFILES_PATH"/shell/aliases/* "$DOTFILES_PATH"/private/shell/aliases/*; do
+    if [[ -f "$script" && "$script" != *"/_main" ]]; then
+        source "$script"
+    fi
+done
+
+# Confirm action
+confirm_action() {
+    local action="$1"
+    local message="${2:-Are you sure you want to proceed?}"
+
+    prompt::ask_yes_no "$message" "y"
+
+    if [ $? -eq "$TRUE" ]; then
+        eval "$action"
+        return $?
+    fi
+
+    echo "Action cancelled"
+    return 1
+}

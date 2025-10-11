@@ -1,0 +1,9 @@
+#!/bin/bash
+
+_is_obs_linux_installed() {
+    system::is_package_installed "obs-studio"
+}
+
+_install_obs_linux() {
+    system::install_package "obs-studio"
+}

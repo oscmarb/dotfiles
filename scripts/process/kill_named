@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Kill process named
+##?
+##? Usage:
+##?   kill_named <process_name>
+docs::parse "$@"
+
+ps aux | grep ${process_name} | grep -v grep | grep -v kill_named | awk '{print $2}' | xargs kill -9
+
+echo "🔥 Process ${process_name} killed!"

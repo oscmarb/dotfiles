@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -eo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+source "$DOTFILES_PATH/shell/aliases/ai"
+source "$DOTFILES_PATH/shell/aliases/git"
+
+##? Generate a commit message using AI.
+##?
+##? Wraps the git_commit_message function to generate a conventional commit
+##? message based on git changes and recent commit history.
+##?
+##? Usage:
+##?   commit_message [stage|latest] [notes]
+##?
+##? Arguments:
+##?   stage           - (Optional) Use only staged changes (git diff HEAD).
+##?   latest          - (Optional) Use changes from the last commit (git diff HEAD~1).
+##?   [notes...]      - (Optional) Any additional text to provide context to the AI.
+##?
+##? By default, without 'stage' or 'latest', it uses staged changes.
+docs::parse "$@"
+
+git_commit_message "$@"

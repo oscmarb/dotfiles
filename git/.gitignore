@@ -1,0 +1,22 @@
+# IntelliJ IDEA
+*.iml
+*.iws
+.idea*
+*.sc
+
+# Visual studio code
+.vscode
+
+# Mac
+.DS_Store
+
+# Custom
+*.no-commit*
+
+# Dependencies
+vendor/
+node_modules/
+
+# Work
+acr-workdir*
+build
