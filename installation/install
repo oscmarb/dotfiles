@@ -5,14 +5,6 @@ set -e
 export DOTFILES_PATH="$HOME/.dotfiles"
 export DOTFILES_PRIVATE_PATH="$DOTFILES_PATH/private/dotfiles"
 
-if [ ! -d "$DOTFILES_PRIVATE_PATH" ]; then
-    git clone git@github.com:oscmarb/dotfiles-private.git "$DOTFILES_PRIVATE_PATH" 2>/dev/null || true
-fi
-
-if [ -d "$DOTFILES_PRIVATE_PATH" ]; then
-	git -C "$DOTFILES_PRIVATE_PATH" pull 2>/dev/null || true
-fi
-
 source "$DOTFILES_PATH/shell/.shellrc"
 source "$DOTFILES_PATH/installation/install_utils"
 
@@ -21,6 +13,10 @@ select_installation_type
 
 system::update
 system::upgrade
+
+mkdir -p "$DOTFILES_PATH/private"
+install_private_dotfiles
+install_raycast_extension
 
 load_linux_repositories
 system::update true

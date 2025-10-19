@@ -154,3 +154,77 @@ add_script_source_reference() {
         echo -e "$append_content" >>"$original_file"
     fi
 }
+
+install_private_dotfiles() {
+    if [ ! -d "$DOTFILES_PRIVATE_PATH" ]; then
+        system::print_working "Cloning private dotfiles..."
+        
+        set +e  
+        system::execute "git clone git@github.com:oscmarb/dotfiles-private.git \"$DOTFILES_PRIVATE_PATH\""
+        local exit_code=$?
+        set -e
+
+        if [[ $exit_code -ne 0 ]]; then
+            system::print_error "Failed to clone private dotfiles. Continuing..."
+            return 0
+        fi
+    elif [ -d "$DOTFILES_PRIVATE_PATH" ]; then
+        system::print_working "Pulling private dotfiles..."
+
+        set +e
+        system::execute "cd \"$DOTFILES_PRIVATE_PATH\" && git reset --hard && git pull"
+        local exit_code=$?
+        set -e
+
+        if [[ $exit_code -ne 0 ]]; then
+            system::print_error "Failed to pull private dotfiles. Continuing..."
+            return 0
+        fi
+    fi
+
+    system::print_success "Private dotfiles installed"
+}
+
+install_raycast_extension() {
+    RAYCAST_EXTENSION_PATH="$DOTFILES_PATH/private/raycast"
+
+    if [ ! -d "$RAYCAST_EXTENSION_PATH" ]; then
+        system::print_working "Cloning raycast extension..."
+        
+        set +e
+        system::execute "git clone git@github.com:oscmarb/personal-raycast-extension.git \"$RAYCAST_EXTENSION_PATH\""
+        local exit_code=$?
+        set -e
+
+        if [[ $exit_code -ne 0 ]]; then
+            system::print_error "Failed to clone raycast extension. Continuing..."
+            return 0
+        fi
+    elif [ -d "$RAYCAST_EXTENSION_PATH" ]; then
+        system::print_working "Pulling raycast extension..."
+        
+        set +e
+        system::execute "cd \"$RAYCAST_EXTENSION_PATH\" && git reset --hard && git pull"
+        local exit_code=$?
+        set -e
+
+        if [[ $exit_code -ne 0 ]]; then
+            system::print_error "Failed to pull raycast extension. Continuing..."
+            return 0
+        fi
+    fi
+
+    system::print_working "Building raycast extension..."
+    
+    set +e
+    system::execute "cd \"$RAYCAST_EXTENSION_PATH\" && npm i && npm run build-dist"
+    local exit_code=$?
+    set -e
+    
+    if [[ $exit_code -ne 0 ]]; then
+        system::print_error "Failed to build raycast extension. Continuing..."
+        return 0
+    fi
+
+    system::print_success "Raycast extension installed"
+}
