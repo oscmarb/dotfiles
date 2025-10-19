@@ -48,19 +48,21 @@ list_scripts_and_contexts() {
 }
 
 fzf_prompt() {
-    local current_path=$(build_path "$@")
-    local next_paths=$(list_scripts_and_contexts "$current_path")
-
+    local scripts_base="${DOTFILES_PATH}/scripts"
+    # Find all script files recursively, excluding _* files and directories
+    local all_scripts=$(find "$scripts_base" -type f ! -name "_*" ! -path "*/_*" | sort -u)
     local option_path="$(
-        echo "$next_paths" |
+        echo "$all_scripts" |
             while read -r full_path; do
-                echo -e "$full_path\t$(basename "$full_path")"
+                # Convert path to command name: /path/to/scripts/git/commit_message -> git commit_message
+                local cmd_name=$(echo "$full_path" | sed "s|^${scripts_base}/||" | tr '/' ' ')
+                echo -e "$full_path\t$cmd_name"
             done |
             fzf \
                 --height 100% \
                 --with-nth=2 \
                 --delimiter='\t' \
-                --preview='p=$(echo {} | cut -f1); [[ -f "$p" ]] && "$p" -h || echo "Content:\n" && find "$p" -mindepth 1 -maxdepth 1 ! -name "_*" -exec basename \{\} \; | sort -u' |
+                --preview='p=$(echo {} | cut -f1); "$p" -h 2>/dev/null || echo "No help available"' |
             cut -f1
     )"
 
@@ -68,12 +70,9 @@ fzf_prompt() {
         return 1
     fi
 
-    if [[ -f "$option_path" ]]; then
-        echo "dot $@ $(basename "$option_path")"
-        return
-    fi
-
-    fzf_prompt "$@" "$(basename $option_path)"
+    # Convert the selected path back to command arguments
+    local cmd_args=$(echo "$option_path" | sed "s|^${scripts_base}/||" | tr '/' ' ')
+    echo "dot $cmd_args"
 }
 
 script_exist() {
