@@ -11,7 +11,7 @@ source "$DOTFILES_PATH/scripts/_core/main"
 docs::parse "$@"
 
 select_sound() {
-    SOUNDS_DIR="$DOTFILES_PATH/private/media/sounds"
+    SOUNDS_DIR="$DOTFILES_PRIVATE_PATH/media/sounds"
     SOUNDS_MAP=()
 
     # Build the sounds map

@@ -127,7 +127,7 @@ install_references() {
     ln -sf "$DOTFILES_PATH/git/.gitconfig" "$HOME/.gitconfig"
 
     # Ssh reference
-    local system_config_source_path="$DOTFILES_PATH/private/ssh/config"
+    local system_config_source_path="$DOTFILES_PRIVATE_PATH/ssh/config"
     if [ -f "$system_config_source_path" ]; then
         mkdir -p "$HOME/.ssh"
         local system_config_path="$HOME/.ssh/config"

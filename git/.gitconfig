@@ -3,10 +3,10 @@ name = Óscar Martínez
 email = oscmarb@gmail.com
 
 [includeIf "gitdir:/Users/oscmarb/"]
-path = /Users/oscmarb/.dotfiles/private/git/.gitconfig.work
+path = /Users/oscmarb/.dotfiles/private/dotfiles/git/.gitconfig.work
 
 [includeIf "gitdir:/Volumes/workplace/"]
-path = /Users/oscmarb/.dotfiles/private/git/.gitconfig.work
+path = /Users/oscmarb/.dotfiles/private/dotfiles/git/.gitconfig.work
 
 [fetch]
 prune = true

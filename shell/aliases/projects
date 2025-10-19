@@ -59,7 +59,7 @@ project::open() {
 project::initialize() {
     local current_dir="${1:-$(pwd)}"
     local project_name=$(basename "$current_dir")
-    local project_config_path="$DOTFILES_PATH/private/projects/$project_name"
+    local project_config_path="$DOTFILES_PRIVATE_PATH/projects/$project_name"
 
     if [ ! -d "$project_config_path" ]; then
         return 0
