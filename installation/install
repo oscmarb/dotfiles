@@ -2,15 +2,16 @@
 
 set -e
 
-if [ ! -d "$HOME/.dotfiles/private" ]; then
-    git clone git@github.com:oscmarb/dotfiles-private.git "$HOME/.dotfiles/private" 2>/dev/null || true
-fi
-
-if [ -d "$HOME/.dotfiles/private" ]; then
-	git -C "$HOME/.dotfiles/private" pull 2>/dev/null || true
-fi
-
 export DOTFILES_PATH="$HOME/.dotfiles"
+export DOTFILES_PRIVATE_PATH="$DOTFILES_PATH/private/dotfiles"
+
+if [ ! -d "$DOTFILES_PRIVATE_PATH" ]; then
+    git clone git@github.com:oscmarb/dotfiles-private.git "$DOTFILES_PRIVATE_PATH" 2>/dev/null || true
+fi
+
+if [ -d "$DOTFILES_PRIVATE_PATH" ]; then
+	git -C "$DOTFILES_PRIVATE_PATH" pull 2>/dev/null || true
+fi
 
 source "$DOTFILES_PATH/shell/.shellrc"
 source "$DOTFILES_PATH/installation/install_utils"

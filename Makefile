@@ -19,7 +19,7 @@ install-references: ## Install references
 
 set-permissions: ## Set permissions for scripts, aliases, completions, and installation
 	@find "./scripts" -type f -exec chmod +x {} \;
-	@find "./private/shell/aliases" -type f -exec chmod +x {} \;
+	@find "./private/dotfiles/shell/aliases" -type f -exec chmod +x {} \;
 	@find "./shell/aliases" -type f -exec chmod +x {} \;
 	@find "./shell/completions" -type f -exec chmod +x {} \;
 	@find "./installation" -type f -exec chmod +x {} \;
