@@ -238,7 +238,6 @@ system::is_verbose_declared() {
 
 system::is_force_enabled() {
     system::is_env_true "$DOTFILES_FORCE" || system::is_env_true "$DF"
-    system::is_env_true "$DOTFILES_FORCE" || system::is_env_true "$DF"
 }
 
 system::is_installation_type_declared() {
