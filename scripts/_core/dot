@@ -14,7 +14,7 @@ dot() {
     while [ $length -gt 0 ]; do
         # Try current args as full path
         if script_exist "${args[@]}"; then
-            eval "$(build_path "${args[@]}") ${extra_args[*]}"
+            "$(build_path "${args[@]}")" "${extra_args[@]}"
             return $?
         fi
 
@@ -31,7 +31,7 @@ dot() {
 
         # Move last argument to extra_args and try again
         extra_args=("${args[-1]}" "${extra_args[@]}")
-        args=(${args[1, $((length - 1))]})
+        args=("${args[@]:0:$((length - 1))}")
         length=${#args[@]}
     done
 
