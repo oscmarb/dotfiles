@@ -42,4 +42,4 @@ if [ -z "$sound_name" ]; then
     sound_name=$(select_sound)
 fi
 
-system::repeat "afplay $DOTFILES_PATH/media/sounds/$sound_name.mp3" "$times"
+system::repeat "afplay $DOTFILES_PRIVATE_PATH/media/sounds/$sound_name.mp3" "$times"
