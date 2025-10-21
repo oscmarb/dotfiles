@@ -12,7 +12,7 @@ source "$DOTFILES_PATH/shell/aliases/git"
 ##? message based on git changes and recent commit history.
 ##?
 ##? Usage:
-##?   commit_message [stage|latest] [notes]
+##?   commit_message [stage|latest] [<notes>]
 ##?
 ##? Arguments:
 ##?   stage           - (Optional) Use only staged changes (git diff HEAD).

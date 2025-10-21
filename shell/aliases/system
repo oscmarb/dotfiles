@@ -4,11 +4,11 @@ alias cl='clear'
 alias reload="omz reload && tmux source $HOME/.tmux.conf"
 alias rl="reload"
 alias fzfp="fzf --preview '$DOTFILES_PATH/fzf/preview {}'"
-alias cpenv="printenv | fzf | awk -F= '{print $2}' | tr -d '\n' | pbcopy"
 alias ubuntu-container='docker run --rm -it ubuntu:latest'
 
 copy() {
-  "$@" | pbcopy
+  local output=$("$@")
+  printf '%s' "${output%$'\n'}" | pbcopy
 }
 
 make() {
@@ -27,12 +27,12 @@ make() {
 }
 
 shell_performance() {
-  local zsh_output=$({ time zsh -i -c exit; } 2>&1)
-
   if [[ "$SHELL" == *"zsh"* ]]; then
-    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk 'NR == 3')
+    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk 'NR == 2')
+    local zsh_output=$({ time zsh -i -c exit; } 2>&1)
   else
-    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk '/^real/ {print}')
+    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk 'NR > 2')
+    local zsh_output=$({ time zsh -i -c exit; } 2>&1 | awk 'NR > 1')
   fi
 
   echo "--- Zsh Time ---"
@@ -46,10 +46,6 @@ update() {
   system::update
   system::upgrade
   omz update
-}
-
-t() {
-  time ($@)
 }
 
 htop() {
@@ -91,7 +87,13 @@ pbpaste() {
   fi
 }
 
-# Change permissions for all files in a directory
+# Makes all files within a specified directory executable by applying
+# the +x permission recursively to each file found.
+#
+# @param {string} $1 - The directory path to process. Required.
+# @return {number} Returns 0 on success, 1 if no directory argument provided.
+# @example
+#   chrx ./scripts
 chrx() {
   if [ -z "$1" ]; then
     echo "Usage: chrx <directory>"

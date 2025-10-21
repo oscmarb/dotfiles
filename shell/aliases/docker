@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # DOCKER
-alias ds='docker stop '
+alias ds='docker stop'
 alias dsa='docker stop $(docker ps -a -q)'
 alias dpsa='docker ps -a'
-alias drc='docker rm '
+alias drc='docker rm'
 alias drac='dr $(docker ps -a -q)'
-alias dri='docker rmi '
+alias dri='docker rmi'
 alias drai='dri $(docker images -a -q)'
 alias di='docker images'
 
@@ -26,5 +26,6 @@ de() {
 # Argument: container name & shell type (bash by default)
 # docker-compose up & exec container
 dcue() {
-	dcu && de $@
+	dcu
+	de "$@"
 }
