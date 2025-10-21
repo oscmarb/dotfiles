@@ -8,7 +8,7 @@ git::ensure_is_not_protected_branch() {
 
     if [[ "${protected_branches[@]}" =~ "${branch}" ]] && ! system::is_force_enabled; then
         echo "❌ You cannot commit directly to the '$(git branch --show-current)' branch."
-        echo "Please switch to another branch before executing the action or use DOTFILES_FORCE env variable."
+        echo "Please switch to another branch before executing the action or use DOTFILES_FORCE or DF env variable."
         return $FALSE
     fi
 
