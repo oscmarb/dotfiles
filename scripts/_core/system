@@ -225,19 +225,11 @@ system::disable_verbose() {
 }
 
 system::is_verbose_enabled() {
-    if system::is_env_true "$DOTFILES_VERBOSE"; then
-        return $TRUE
-    fi
-
-    return $FALSE
+    system::is_env_true "$DOTFILES_VERBOSE"
 }
 
 system::is_debug_enabled() {
-    if system::is_env_true "$DOTFILES_DEBUG"; then
-        return $TRUE
-    fi
-
-    return $FALSE
+    system::is_env_true "$DOTFILES_DEBUG"
 }
 
 system::is_verbose_declared() {
@@ -245,6 +237,7 @@ system::is_verbose_declared() {
 }
 
 system::is_force_enabled() {
+    system::is_env_true "$DOTFILES_FORCE" || system::is_env_true "$DF"
     system::is_env_true "$DOTFILES_FORCE" || system::is_env_true "$DF"
 }
 
