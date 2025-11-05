@@ -24,19 +24,38 @@ dot() {
                 return 1
             fi
 
-            print -z -- "$(fzf_prompt "${args[@]}")"
+            if [ -n "$ZSH_VERSION" ]; then
+                print -z -- "$(fzf_prompt "${args[@]}")"
+            elif [ -n "$BASH_VERSION" ]; then
+                # In bash, we can't use print -z, so just output to stdout
+                echo "$(fzf_prompt "${args[@]}")"
+            fi
 
             return $?
         fi
 
         # Move last argument to extra_args and try again
-        extra_args=("${args[-1]}" "${extra_args[@]}")
-        args=("${args[@]:0:$((length - 1))}")
+        if [ -n "$BASH_VERSION" ]; then
+            # Bash: 0-indexed arrays
+            local last_idx=$((length - 1))
+            extra_args=("${args[$last_idx]}" "${extra_args[@]}")
+            args=("${args[@]:0:$last_idx}")
+        elif [ -n "$ZSH_VERSION" ]; then
+            # Zsh: 1-indexed arrays (by default)
+            extra_args=("${args[$length]}" "${extra_args[@]}")
+            args=("${args[@]:0:$((length - 1))}")
+        fi
         length=${#args[@]}
     done
 
     if [[ $has_no_args -eq 0 ]]; then
-        print -z -- "$(fzf_prompt)"
+        if [ -n "$ZSH_VERSION" ]; then
+            print -z -- "$(fzf_prompt)"
+        elif [ -n "$BASH_VERSION" ]; then
+            # In bash, we can't use print -z, so just output to stdout
+            echo "$(fzf_prompt)"
+        fi
+
         return 0
     fi
 
