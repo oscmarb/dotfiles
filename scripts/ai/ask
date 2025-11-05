@@ -3,7 +3,7 @@
 source "$DOTFILES_PATH/scripts/_core/main"
 source "$DOTFILES_PATH/shell/aliases/ai"
 
-##? Downloads a video audio in the current directory
+##? Asks AI a question
 ##?
 ##? Usage:
 ##?   ask <question>...
