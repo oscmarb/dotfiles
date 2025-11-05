@@ -61,15 +61,19 @@ navialias() {
 }
 
 notify() {
-  "$@"
-  set +m
-  (
-    osascript -e "display notification \"Your command has finished: $*\" with title \"Command finished\""
-    afplay /System/Library/Sounds/Ping.aiff
-  ) &
-  disown
-  set -m
+    eval "$@"
+    local exit_code=$?
+    local cmd="$*"
+    set +m
+    (
+        osascript -e "display notification \"Your command has finished: $cmd\" with title \"Command finished\""
+        afplay /System/Library/Sounds/Ping.aiff
+    ) &
+    disown
+    set -m
+    return $exit_code
 }
+
 
 pbcopy() {
   if command -v xclip >/dev/null 2>&1; then
