@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source "$DOTFILES_PATH/scripts/_core/main"
+source "$DOTFILES_PATH/shell/aliases/ai"
+
+##? Asks AI a question
+##?
+##? Usage:
+##?   ask <question>...
+docs::parse "$@"
+
+ask_ai "$*"
