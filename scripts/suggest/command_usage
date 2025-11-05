@@ -1,0 +1,51 @@
+#!/bin/bash
+
+
+source "$DOTFILES_PATH/scripts/_core/main"
+source "$DOTFILES_PATH/shell/aliases/ai"
+
+##? Downloads a video audio in the current directory
+##?
+##? Usage:
+##?   command_usage <command> <question>...
+docs::parse "$@"
+
+man_output=$(man "$command" 2>&1)
+man_exit_code=$?
+
+# If man fails, try --help
+if [ $man_exit_code -ne 0 ]; then
+    man_output=$($command --help 2>&1)
+    help_exit_code=$?
+    
+    # If both fail, exit with error
+    if [ $help_exit_code -ne 0 ]; then
+        echo "Error: No man or help information found for '$command'"
+        exit 1
+    fi
+fi
+
+shift
+question="$*"
+
+prompt=$(
+cat <<EOF
+You are a command-line expert. I have the man or help output from a command and a specific question about how to use it.
+
+COMMAND: $command
+COMMAND HELP OR MAN OUTPUT:
+$man_output
+
+QUESTION: $question
+
+Please provide a clear, concise answer that:
+1. Directly addresses the question using information from the help output
+2. Provides the exact command syntax if applicable
+3. Explains any relevant options or flags
+4. Gives practical examples when helpful
+
+Format your response in a clear, easy-to-read manner with proper formatting.
+EOF
+	)
+
+	ask_ai "$prompt"
