@@ -2,7 +2,7 @@
 
 alias salias="suggest_alias_for_task"
 alias stmux="suggest_tmux_shortcut"
-alias shelp="suggest_command_usage"
+alias sman="dot suggest command_usage"
 
 function suggest_alias_for_task() {
 	if [ -z "$*" ]; then
@@ -72,44 +72,6 @@ or 'No existing shortcuts found for this task'
 SUGGESTED NEW SHORTCUTS:
 1. shortcut: how can I configure it
 or 'No new shortcuts suggested'
-EOF
-	)
-
-	ask_ai "$prompt"
-}
-
-function suggest_command_usage() {
-	if [ -z "$*" ]; then
-		echo "Usage: <command> --help | help-suggest \"<question or query>\""
-		echo "Example: git --help | help-suggest \"How do I create a new branch?\""
-		return 1
-	fi
-
-	# Read help output from stdin
-	local help_output=$(cat)
-
-	if [ -z "$help_output" ]; then
-		echo "Error: No help output provided via stdin"
-		echo "Usage: <command> --help | help-suggest \"<question or query>\""
-		return 1
-	fi
-
-	local prompt=$(
-		cat <<EOF
-You are a command-line expert. I have the help output from a command and a specific question about how to use it.
-
-HELP OUTPUT:
-$help_output
-
-QUESTION: $@
-
-Please provide a clear, concise answer that:
-1. Directly addresses the question using information from the help output
-2. Provides the exact command syntax if applicable
-3. Explains any relevant options or flags
-4. Gives practical examples when helpful
-
-Format your response in a clear, easy-to-read manner with proper formatting.
 EOF
 	)
 
