@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 source "$DOTFILES_PATH/scripts/_core/main"
 source "$DOTFILES_PATH/shell/aliases/ai"
 
@@ -46,6 +45,6 @@ Please provide a clear, concise answer that:
 
 Format your response in a clear, easy-to-read manner with proper formatting.
 EOF
-	)
+)
 
 	ask_ai "$prompt"
