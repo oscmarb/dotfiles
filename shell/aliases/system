@@ -11,6 +11,12 @@ copy() {
   printf '%s' "${output%$'\n'}" | pbcopy
 }
 
+print_copy() {
+  local output=$("$@")
+  echo "$output"
+  printf '%s' "${output%$'\n'}" | pbcopy
+}
+
 make() {
   if [[ "$*" == *"-f"* ]]; then
     /usr/bin/make "$@"

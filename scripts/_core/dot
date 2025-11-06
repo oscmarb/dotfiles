@@ -18,22 +18,6 @@ dot() {
             return $?
         fi
 
-        if context_exist "${args[@]}"; then
-            if [ ${#extra_args[@]} -gt 0 ]; then
-                system::print_error "Script or context not found"
-                return 1
-            fi
-
-            if [ -n "$ZSH_VERSION" ]; then
-                print -z -- "$(fzf_prompt "${args[@]}")"
-            elif [ -n "$BASH_VERSION" ]; then
-                # In bash, we can't use print -z, so just output to stdout
-                echo "$(fzf_prompt "${args[@]}")"
-            fi
-
-            return $?
-        fi
-
         # Move last argument to extra_args and try again
         if [ -n "$BASH_VERSION" ]; then
             # Bash: 0-indexed arrays
@@ -48,18 +32,15 @@ dot() {
         length=${#args[@]}
     done
 
-    if [[ $has_no_args -eq 0 ]]; then
-        if [ -n "$ZSH_VERSION" ]; then
-            print -z -- "$(fzf_prompt)"
-        elif [ -n "$BASH_VERSION" ]; then
-            # In bash, we can't use print -z, so just output to stdout
-            echo "$(fzf_prompt)"
-        fi
+    local command="$(fzf_prompt "${extra_args[@]}")"
+    eval "$command --help"
 
-        return 0
+    if [ -n "$ZSH_VERSION" ]; then
+        print -z -- "$command "
+    elif [ -n "$BASH_VERSION" ]; then
+        # In bash, we can't use print -z, so just output to stdout
+        echo "$command"
     fi
-
-    system::print_error "Script or context not found"
 }
 
 list_scripts_and_contexts() {
@@ -78,6 +59,7 @@ fzf_prompt() {
                 echo -e "$full_path\t$cmd_name"
             done |
             fzf \
+                --query="$*" \
                 --height 100% \
                 --with-nth=2 \
                 --delimiter='\t' \
