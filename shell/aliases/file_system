@@ -14,7 +14,7 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias rm='rm -i'
 alias rmdir="rm -rf"
-alias cpwd="copy pwd"
+alias cpwd="print_copy pwd"
 
 # qf - Quick find a file by name in the current directory and subdirectories
 #
