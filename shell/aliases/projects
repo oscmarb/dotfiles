@@ -1,5 +1,13 @@
 #!/bin/bash
 
+export PROJECT_PATHS=(
+  "$HOME/Documents/projects/own"
+  "$HOME/Documents/projects/other"
+  "$HOME/Documents/projects/test"
+  "$HOME/Documents/projects/learn"
+  "$HOME/Documents/projects/workspace"
+)
+
 alias pl="project::list"
 alias po="project::open"
 alias pi="project::initialize"
@@ -25,16 +33,12 @@ project::list() {
 }
 
 project::open() {
-    selection=$1
+    selection="${1:-}"
     local projects_lists=$(project::list)
 
-    if [ -n "$selection" ]; then
-        escaped_selection=$(echo "$selection" | sed 's/\//\\\//g')
-
-        if echo "$projects_lists" | grep -q "$escaped_selection$"; then
-            $EDITOR "$selection"
-            return $?
-        fi
+    if [ -d "$selection" ]; then
+        $EDITOR "$selection"
+        return $?
     fi
 
     if [ -z "$selection" ]; then
@@ -45,12 +49,12 @@ project::open() {
         return 1
     fi
 
-    echo "$projects_lists" | while read -r project_path; do
-        if [ "$(basename "$project_path")" = "$selection" ]; then
-            $EDITOR "$project_path"
-            return $?
-        fi
-    done
+    local project_path=$(echo "$projects_lists" | grep "/$selection$" | head -n 1)
+    
+    if [ -n "$project_path" ]; then
+        $EDITOR "$project_path"
+        return $?
+    fi
 
     system::print_error "$selection project not found"
     return 1

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+source "$DOTFILES_PATH/shell/aliases/projects"
+
+##? Open a project
+##?
+##? Usage:
+##?   open [<project>]
+docs::parse "$@"
+
+project::open "${project:-}"
