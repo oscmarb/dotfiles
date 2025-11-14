@@ -7,6 +7,9 @@ source "$DOTFILES_PATH/shell/aliases/ai"
 ##?
 ##? Usage:
 ##?   alias <question>...
+##?
+##? Example:
+##?   alias "How can I get the directory size?"
 docs::parse "$@"
 
 if [ -z "$*" ]; then

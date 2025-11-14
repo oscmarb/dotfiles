@@ -3,10 +3,13 @@
 source "$DOTFILES_PATH/scripts/_core/main"
 source "$DOTFILES_PATH/shell/aliases/ai"
 
-##? Asks AI how to use a command given a question 
+##? Ask AI how to use a command given a question
 ##?
 ##? Usage:
 ##?   command_usage <command> <question>...
+##?
+##? Example:
+##?   command_usage ls How can I list only directories?
 docs::parse "$@"
 
 man_output=$(man "$command" 2>&1)
