@@ -17,6 +17,9 @@ install: ## Install dotfiles
 install-references: ## Install references
 	@bash ./installation/install_references
 
+install-private: ## Install private repositories
+	@bash ./installation/install_private
+
 set-permissions: ## Set permissions for scripts, aliases, completions, and installation
 	@find "./scripts" -type f -exec chmod +x {} \;
 	@find "./private/dotfiles/shell/aliases" -type f -exec chmod +x {} \;
