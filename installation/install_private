@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+export DOTFILES_PATH="$HOME/.dotfiles"
+export DOTFILES_PRIVATE_PATH="$DOTFILES_PATH/private/dotfiles"
+
+source "$DOTFILES_PATH/shell/.shellrc"
+source "$DOTFILES_PATH/installation/install_utils"
+
+install_private_dotfiles
+install_raycast_extension
