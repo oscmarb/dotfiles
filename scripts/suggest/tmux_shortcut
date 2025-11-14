@@ -1,0 +1,46 @@
+#!/bin/bash
+
+source "$DOTFILES_PATH/scripts/_core/main"
+source "$DOTFILES_PATH/shell/aliases/ai"
+
+##? Ask AI if there is a tmux shortcut for a given task.
+##?
+##? Usage:
+##?   tmux <question>...
+##?
+##? Example:
+##?   tmux "How can I attach to an existing session?"
+docs::parse "$@"
+
+if [ -z "$*" ]; then
+	echo "Please provide a prompt describing what you want to achieve"
+	return 1
+fi
+
+prompt=$(
+	cat <<EOF
+Given my notes about my configuration of tmux:
+
+$(cat $DOTFILES_PRIVATE_PATH/docs/shortcuts/tmux.md)
+
+And my current tmux configuration:
+
+$(cat $DOTFILES_PATH/tmux/.tmux.conf)
+
+I want to: $@
+
+First, tell me if there are any EXISTING shortcuts that help with this task.
+Then, if needed, suggest new shortcuts that would be helpful.
+
+Format your response exactly like this:
+EXISTING SHORTCUTS:
+1. shortcut: what it does
+or 'No existing shortcuts found for this task'
+
+SUGGESTED NEW SHORTCUTS:
+1. shortcut: how can I configure it
+or 'No new shortcuts suggested'
+EOF
+)
+
+ask_ai "$prompt"
