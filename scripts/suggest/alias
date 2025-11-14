@@ -1,0 +1,47 @@
+#!/bin/bash
+
+source "$DOTFILES_PATH/scripts/_core/main"
+source "$DOTFILES_PATH/shell/aliases/ai"
+
+##? Asks AI if there is some alias to perform a task
+##?
+##? Usage:
+##?   alias <question>...
+docs::parse "$@"
+
+if [ -z "$*" ]; then
+	echo "Please provide a prompt describing what you want to achieve"
+	return 1
+fi
+
+# Collect all alias definitions and scripts
+alias_content=""
+for file in "$DOTFILES_PATH"/shell/aliases/*; do
+	if [ -f "$file" ]; then
+		alias_content+="# From $(basename "$file"):"$'\n'
+		alias_content+="$(cat "$file")"$'\n'
+	fi
+done
+
+prompt=$(
+		cat <<EOF
+You are a shell alias expert. Given these aliases:
+
+$alias_content
+Task: $@
+
+First, tell me if there are any EXISTING aliases that help with this task.
+Then, if needed, suggest new aliases that would be helpful.
+
+Format your response exactly like this:
+EXISTING ALIASES:
+1. alias_name: what it does
+or 'No existing aliases found for this task'
+
+SUGGESTED NEW ALIASES:
+1. alias_name='command'
+or 'No new aliases suggested'
+EOF
+	)
+
+ask_ai "$prompt"
