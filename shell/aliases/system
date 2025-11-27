@@ -2,7 +2,7 @@
 
 alias cl='clear'
 alias ray-restart="dot raycast restart"
-alias reload="omz reload && tmux source $HOME/.tmux.conf"
+alias reload="zsh && tmux source $HOME/.tmux.conf"
 alias rl="reload"
 alias fzfp="fzf --preview '$DOTFILES_PATH/fzf/preview {}'"
 alias ubuntu-container='docker run --rm -it ubuntu:latest'
@@ -52,7 +52,15 @@ shell_performance() {
 update() {
   system::update
   system::upgrade
-  omz update
+  zinit update
+  clear-completions-cache
+  reload
+}
+
+clear-completions-cache(){
+  rm -f ${ZDOTDIR:-$HOME}/.zcompdump*
+  autoload -U compinit
+  compinit
 }
 
 htop() {
@@ -78,6 +86,7 @@ notify() {
     ) &
     disown
     set -m
+    open -g "raycast://extensions/raycast/raycast/confetti" 2> /dev/null
     return $exit_code
 }
 
