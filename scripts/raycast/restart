@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$DOTFILES_PATH/scripts/_core/main"
+
+##? Restarts raycast
+##?
+##? Usage:
+##?   restart
+docs::parse "$@"
+
+killall Raycast && sleep 1 && open -a Raycast
