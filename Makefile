@@ -26,6 +26,7 @@ set-permissions: ## Set permissions for scripts, aliases, completions, and insta
 	@find "./shell/aliases" -type f -exec chmod +x {} \;
 	@find "./shell/completions" -type f -exec chmod +x {} \;
 	@find "./installation" -type f -exec chmod +x {} \;
+	@find "./raycast" -type f -exec chmod +x {} \;
 
 exec-ubuntu: ## Exec ubuntu container with dotfiles dependencies installed
 	@echo 'FROM ubuntu:latest \n RUN apt update && apt install -y git curl unzip make sudo \n RUN echo "ALL ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd' | docker build -t dotfiles-ubuntu - > /dev/null

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 alias cl='clear'
+alias ray-restart="dot raycast restart"
 alias reload="omz reload && tmux source $HOME/.tmux.conf"
 alias rl="reload"
 alias fzfp="fzf --preview '$DOTFILES_PATH/fzf/preview {}'"
