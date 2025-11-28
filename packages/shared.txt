@@ -34,10 +34,8 @@ obs
 dbeaver
 navi
 bottom
-oh-my-zsh
 yt-dlp
 jp2a
-zsh-plugins
 neovim
 kitty
 
