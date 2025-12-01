@@ -62,6 +62,7 @@ loadnvm() {
 update() {
   system::update
   system::upgrade
+  zinit delete --clean
   zinit update
   clear-completions-cache
   reload
