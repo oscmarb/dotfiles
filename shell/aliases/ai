@@ -1,11 +1,35 @@
 #!/bin/bash
 
+export DEFAULT_GEMINI_MODEL="gemini-2.5-flash"
+export DEFAULT_BEDROCK_MODEL="us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+
 alias ai="ask_ai"
 alias q="~/.local/bin/q"
 alias qchat="~/.local/bin/qchat"
 
+list_gemini_models(){
+	echo "gemini-2.5-pro (pro)"
+	echo "gemini-2.5-flash (normal)"
+	echo "gemini-2.5-flash-lite (fast)"
+}
+
 ask_bedrock() {
+	declare -A models
+	models[fast]="$DEFAULT_BEDROCK_MODEL"
+	models[default]="$DEFAULT_BEDROCK_MODEL"
+
 	local prompt_text="$1"
+	local modelArgument="$2"
+	local model="$DEFAULT_BEDROCK_MODEL"
+
+	if [[ -n "$modelArgument" ]]; then
+    	if [[ -v 'models[$modelArgument]' ]]; then
+        	model="${models[$modelArgument]}"
+    	else
+        	model="$modelArgument"
+    	fi
+	fi
+
 	local response_path=$(mktemp ${TMPDIR}XXXXXXXXXX)
 	local message=$(jq -n --arg prompt_text "$prompt_text" \
 		'{
@@ -19,7 +43,7 @@ ask_bedrock() {
 
 	aws bedrock-runtime invoke-model \
 		--profile cline-profile \
-		--model-id us.anthropic.claude-sonnet-4-5-20250929-v1:0 \
+		--model-id "$model" \
 		--body "$message" \
 		--cli-binary-format raw-in-base64-out \
 		--no-cli-pager \
@@ -38,8 +62,22 @@ can_ask_gemini() {
 }
 
 ask_gemini() {
+	declare -A models
+	models[fast]="gemini-2.5-flash-lite"
+	models[default]="gemini-2.5-flash"
+	models[pro]="gemini-2.5-pro"
+
 	local prompt_text="$1"
-	local model="${2:-gemini-2.0-flash}"
+	local modelArgument="$2"
+	local model="$DEFAULT_GEMINI_MODEL"
+
+	if [[ -n "$modelArgument" ]]; then
+    	if [[ -v 'models[$modelArgument]' ]]; then
+        	model="${models[$modelArgument]}"
+    	else
+        	model="$modelArgument"
+    	fi
+	fi
 
 	if [ -n "$GEMINI_API_KEY" ]; then
 		local message=$(jq -n --arg prompt_text "$prompt_text" \
