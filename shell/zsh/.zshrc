@@ -57,10 +57,11 @@ setopt HIST_FCNTL_LOCK        # Use fcntl for history file locking
 # END HISTORY
 
 # PLUGINS
-zinit light zsh-users/zsh-autosuggestions
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
-zinit light Aloxaf/fzf-tab
+zi snippet OMZP::autojump
+zi light zsh-users/zsh-autosuggestions
+zi light zsh-users/zsh-syntax-highlighting
+zi light zsh-users/zsh-completions
+zi light Aloxaf/fzf-tab
 # PLUGINS END
 
 source "$DOTFILES_PATH/shell/.shellrc"
