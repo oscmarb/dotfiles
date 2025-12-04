@@ -1,26 +1,33 @@
 #!/bin/bash
 
-export DEFAULT_GEMINI_MODEL="gemini-2.5-flash"
-export DEFAULT_BEDROCK_MODEL="us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-
 alias ai="ask_ai"
-alias q="~/.local/bin/q"
-alias qchat="~/.local/bin/qchat"
 
 list_gemini_models(){
-	echo "gemini-2.5-pro (pro)"
-	echo "gemini-2.5-flash (normal)"
-	echo "gemini-2.5-flash-lite (fast)"
+	echo "gemini-2.5-pro (pro)(slow)"
+	echo "gemini-2.5-flash (flash)(normal)(default)"
+	echo "gemini-2.5-flash-lite (lite)(fast)"
+}
+
+list_bedrock_models(){
+	echo "sonnet (sonnet)(normal)(slow)(default)"
+	echo "haiku (haiku)(fast)"
 }
 
 ask_bedrock() {
 	declare -A models
-	models[fast]="$DEFAULT_BEDROCK_MODEL"
-	models[default]="$DEFAULT_BEDROCK_MODEL"
+
+	models[haiku]="us.anthropic.claude-haiku-4-5-20251001-v1:0"
+	models[sonnet]="us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+	
+	models[fast]="${models[haiku]}"
+	models[normal]="${models[sonnet]}"
+	models[slow]="${models[sonnet]}"
+	
+	models[default]="${models[sonnet]}"
 
 	local prompt_text="$1"
 	local modelArgument="$2"
-	local model="$DEFAULT_BEDROCK_MODEL"
+	local model="${models[default]}"
 
 	if [[ -n "$modelArgument" ]]; then
     	if [[ -v 'models[$modelArgument]' ]]; then
@@ -63,13 +70,20 @@ can_ask_gemini() {
 
 ask_gemini() {
 	declare -A models
-	models[fast]="gemini-2.5-flash-lite"
-	models[default]="gemini-2.5-flash"
+	
+	models[lite]="gemini-2.5-flash-lite"
+	models[flash]="gemini-2.5-flash"
 	models[pro]="gemini-2.5-pro"
+
+	models[fast]="${models[lite]}"
+	models[normal]="${models[flash]}"
+	models[slow]="${models[pro]}"
+
+	models[default]="${models[flash]}"
 
 	local prompt_text="$1"
 	local modelArgument="$2"
-	local model="$DEFAULT_GEMINI_MODEL"
+	local model="${models[default]}"
 
 	if [[ -n "$modelArgument" ]]; then
     	if [[ -v 'models[$modelArgument]' ]]; then
