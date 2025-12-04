@@ -57,7 +57,7 @@ setopt HIST_FCNTL_LOCK        # Use fcntl for history file locking
 # END HISTORY
 
 # PLUGINS
-zi snippet OMZP::autojump
+# zi snippet OMZP::autojump # Disabled because it degrades startup Zsh performance
 zi light zsh-users/zsh-autosuggestions
 zi light zsh-users/zsh-syntax-highlighting
 zi light zsh-users/zsh-completions

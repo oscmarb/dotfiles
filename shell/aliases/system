@@ -34,19 +34,126 @@ make() {
 }
 
 shell_performance() {
-  if [[ "$SHELL" == *"zsh"* ]]; then
-    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk 'NR == 2')
-    local zsh_output=$({ time zsh -i -c exit; } 2>&1)
-  else
-    local bash_output=$({ time bash -i -c exit; } 2>&1 | awk 'NR > 2')
-    local zsh_output=$({ time zsh -i -c exit; } 2>&1 | awk 'NR > 1')
-  fi
+  local iterations=20
+  
+  echo "Iterations: $iterations"
+  echo ""
+  _measure_shell_startup "zsh" $iterations
+  echo ""
+  _measure_shell_startup "bash" $iterations
+}
 
-  echo "--- Zsh Time ---"
-  echo "$zsh_output"
-  echo
-  echo "--- Bash Time ---"
-  echo "$bash_output"
+zsh_shell_performance(){
+  local iterations=20
+  
+  echo "Iterations: $iterations"
+  echo ""
+  _measure_shell_startup "zsh" $iterations
+}
+
+bash_shell_performance(){
+  local iterations=20
+  
+  echo "Iterations: $iterations"
+  echo ""
+  _measure_shell_startup "bash" $iterations
+}
+
+_measure_shell_startup() {
+  local shell="$1"
+  local iterations="$2"
+  
+  # Input validation
+  if [[ -z "$shell" ]]; then
+    echo "Error: Shell name required (bash or zsh)"
+    return 1
+  fi
+  
+  if [[ "$shell" != "bash" && "$shell" != "zsh" ]]; then
+    echo "Error: Invalid shell. Use 'bash' or 'zsh'"
+    return 1
+  fi
+  
+  if [[ ! "$iterations" =~ ^[0-9]+$ ]] || [[ "$iterations" -lt 1 ]]; then
+    echo "Error: Iterations must be a positive number"
+    return 1
+  fi
+  
+  local measurements=()
+  local count=1
+  
+  # Use TIMEFORMAT to get clean time output
+  local original_timeformat="$TIMEFORMAT"
+  TIMEFORMAT='%3R'
+  
+  while [ $count -le $iterations ]; do
+    # Measure time and capture stderr (where time output goes)
+    local time_output=$( { time $shell -i -c exit; } 2>&1 )
+    
+    # Check if measurement succeeded
+    if [[ -z "$time_output" ]]; then
+      echo "Error: Failed to measure iteration $count"
+      return 1
+    fi
+    
+    if [[ "$SHELL" == *"zsh"* ]]; then
+      if [[ "$shell" == "zsh" ]]; then
+        local time_value=$(echo "$time_output" | awk '{print $7}')
+      else
+        local time_value=$(echo "$time_output" | awk 'NR == 2' | awk '{print $7}')
+      fi
+    else
+      if [[ "$shell" == "zsh" ]]; then
+        local time_value="$time_output"
+      else
+        local time_value=$(echo "$time_output" | awk 'NR == 2')
+      fi
+    fi
+
+    if [[ -n "$time_value" ]]; then
+      measurements+=("$time_value")
+    else
+      echo "Error: Could not parse time from iteration $count"
+      return 1
+    fi
+    
+    ((count++))
+  done
+  
+  # Restore original TIMEFORMAT
+  TIMEFORMAT="$original_timeformat"
+  
+  # Check if we got any valid measurements
+  if [[ ${#measurements[@]} -eq 0 ]]; then
+    echo "Error: No valid measurements collected"
+    return 1
+  fi
+  
+  # Calculate statistics
+  local sum=0
+  local min=""
+  local max=""
+  
+  for time_val in "${measurements[@]}"; do
+    sum=$(awk -v a="$sum" -v b="$time_val" 'BEGIN{printf "%.10f", a + b}')
+    
+    # Update min
+    if [[ -z "$min" ]] || (( $(awk -v a="$time_val" -v b="$min" 'BEGIN{print (a < b)}') )); then
+      min="$time_val"
+    fi
+    
+    # Update max
+    if [[ -z "$max" ]] || (( $(awk -v a="$time_val" -v b="$max" 'BEGIN{print (a > b)}') )); then
+      max="$time_val"
+    fi
+  done
+  
+  local average=$(awk -v sum="$sum" -v count="${#measurements[@]}" 'BEGIN{printf "%.3f", sum / count}')
+  
+  echo "--- Results for $shell ---"
+  echo "Average:    ${average}s"
+  echo "Min:        ${min}s"
+  echo "Max:        ${max}s"
 }
 
 loadnvm() {
