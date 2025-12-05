@@ -50,4 +50,4 @@ Format your response in a clear, easy-to-read manner with proper formatting.
 EOF
 )
 
-	ask_ai "$prompt"
+ask_ai "$prompt"

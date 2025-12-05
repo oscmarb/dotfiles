@@ -13,28 +13,38 @@ list_bedrock_models(){
 	echo "haiku (haiku)(fast)"
 }
 
+_get_bedrock_model() {
+    case "$1" in
+        haiku)   echo "us.anthropic.claude-haiku-4-5-20251001-v1:0" ;;
+        sonnet)  echo "us.anthropic.claude-sonnet-4-5-20250929-v1:0" ;;
+        fast)    _get_bedrock_model "haiku" ;;
+        normal)  _get_bedrock_model "sonnet" ;;
+        slow)    _get_bedrock_model "sonnet" ;;
+        default) _get_bedrock_model "sonnet" ;;
+        *)       echo "$1" ;;  # Unknown key
+    esac
+}
+
+_get_gemini_model() {
+    case "$1" in
+        lite)   echo "gemini-2.5-flash-lite" ;;
+        flash)  echo "gemini-2.5-flash" ;;
+		pro)  echo "gemini-2.5-pro" ;;
+        fast)    _get_bedrock_model "lite" ;;
+        normal)  _get_bedrock_model "flash" ;;
+        slow)    _get_bedrock_model "pro" ;;
+        default) _get_bedrock_model "flash" ;;
+        *)       echo "$1" ;;  # Unknown key
+    esac
+}
+
 ask_bedrock() {
-	declare -A models
-
-	models[haiku]="us.anthropic.claude-haiku-4-5-20251001-v1:0"
-	models[sonnet]="us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	
-	models[fast]="${models[haiku]}"
-	models[normal]="${models[sonnet]}"
-	models[slow]="${models[sonnet]}"
-	
-	models[default]="${models[sonnet]}"
-
 	local prompt_text="$1"
 	local modelArgument="$2"
-	local model="${models[default]}"
+	local model=$(_get_bedrock_model "default")
 
 	if [[ -n "$modelArgument" ]]; then
-    	if [[ -v 'models[$modelArgument]' ]]; then
-        	model="${models[$modelArgument]}"
-    	else
-        	model="$modelArgument"
-    	fi
+    	model=$(_get_bedrock_model "$modelArgument")
 	fi
 
 	local response_path=$(mktemp ${TMPDIR}XXXXXXXXXX)
@@ -69,28 +79,12 @@ can_ask_gemini() {
 }
 
 ask_gemini() {
-	declare -A models
-	
-	models[lite]="gemini-2.5-flash-lite"
-	models[flash]="gemini-2.5-flash"
-	models[pro]="gemini-2.5-pro"
-
-	models[fast]="${models[lite]}"
-	models[normal]="${models[flash]}"
-	models[slow]="${models[pro]}"
-
-	models[default]="${models[flash]}"
-
 	local prompt_text="$1"
 	local modelArgument="$2"
-	local model="${models[default]}"
+	local model=$(_get_gemini_model "default")
 
 	if [[ -n "$modelArgument" ]]; then
-    	if [[ -v 'models[$modelArgument]' ]]; then
-        	model="${models[$modelArgument]}"
-    	else
-        	model="$modelArgument"
-    	fi
+    	model=$(_get_gemini_model "$modelArgument")
 	fi
 
 	if [ -n "$GEMINI_API_KEY" ]; then
@@ -129,9 +123,8 @@ ask_gemini() {
 
 ask_ai() {
 	if can_ask_gemini; then
-		ask_gemini "$*"
-		return $?
+		ask_gemini "$1" "$2"
+	else
+		ask_bedrock "$1" "$2"
 	fi
-
-	ask_bedrock "$*"
 }
