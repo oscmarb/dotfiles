@@ -21,7 +21,7 @@ reload() {
     fi
   fi
 
-  tmux source $HOME/.tmux.conf
+  tmux source $HOME/.tmux.conf 2>/dev/null || true
 }
 
 copy() {
