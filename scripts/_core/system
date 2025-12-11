@@ -240,6 +240,16 @@ system::is_force_enabled() {
     system::is_env_true "$DOTFILES_FORCE" || system::is_env_true "$DF"
 }
 
+system::is_repository_not_protected() {
+    local repository_path=$(git rev-parse --show-toplevel)
+
+    if [ -f "$repository_path/.git-non-protected.no-commit" ]; then
+        return $TRUE
+    fi
+
+    return $FALSE
+}
+
 system::is_installation_type_declared() {
     system::is_env_declared "$DOTFILES_INSTALLATION_TYPE"
 }
