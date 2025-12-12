@@ -188,6 +188,7 @@ update() {
   system::upgrade
   zinit delete --clean
   zinit update
+  zinit cclear
   clear-completions-cache
   reload
 }
