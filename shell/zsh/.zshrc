@@ -11,6 +11,7 @@ autoload -U compinit
 
 if [[ ! -f ${ZDOTDIR:-$HOME}/.zcompdump || -n $(find "${ZDOTDIR:-$HOME}/.zcompdump" -mtime +1 -print 2>/dev/null) ]]; then
   compinit # Re-builds the completion cache
+  zinit cclear
 else
   compinit -C # Use completion cache
 fi
