@@ -2,6 +2,7 @@
 
 alias g='git'
 
+alias gignore='touch .git-non-protected.no-commit'
 alias gf='git fetch'
 alias gs='git status'
 alias gl='git_log'
