@@ -172,7 +172,7 @@ install_private_dotfiles() {
         system::print_working "Pulling private dotfiles..."
 
         set +e
-        system::execute "cd \"$DOTFILES_PRIVATE_PATH\" && git reset --hard && git pull"
+        system::execute "cd \"$DOTFILES_PRIVATE_PATH\" && git pull"
         local exit_code=$?
         set -e
 
