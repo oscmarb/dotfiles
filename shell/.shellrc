@@ -28,6 +28,10 @@ fi
 source "$DOTFILES_PATH/shell/aliases/_main"
 source "$DOTFILES_PATH/scripts/_main"
 
+if [[ -f "$DOTFILES_PRIVATE_PATH/shell/.shellrc" ]]; then
+  source "$DOTFILES_PRIVATE_PATH/shell/.shellrc"
+fi
+
 ### CUSTOM CONFIG LOADING
 if [[ -f "$HOME/.dotfiles.config" ]]; then
   source "$HOME/.dotfiles.config"
