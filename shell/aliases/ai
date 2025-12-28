@@ -2,10 +2,17 @@
 
 alias ai="ask_ai"
 
+request_gemini_models(){
+	local response=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY" \
+			-H 'Content-Type: application/json' \
+			-X GET)
+	echo $response
+}
+
 list_gemini_models(){
-	echo "gemini-2.5-pro (pro)(slow)"
-	echo "gemini-2.5-flash (flash)(normal)(default)"
-	echo "gemini-2.5-flash-lite (lite)(fast)"
+	echo "gemini-pro-latest (pro)(slow)"
+	echo "gemini-flash-latest (flash)(normal)(default)"
+	echo "gemini-flash-lite-latest (lite)(fast)"
 }
 
 list_bedrock_models(){
@@ -27,13 +34,13 @@ _get_bedrock_model() {
 
 _get_gemini_model() {
     case "$1" in
-        lite)   echo "gemini-2.5-flash-lite" ;;
-        flash)  echo "gemini-2.5-flash" ;;
-		pro)  echo "gemini-2.5-pro" ;;
-        fast)    _get_bedrock_model "lite" ;;
-        normal)  _get_bedrock_model "flash" ;;
-        slow)    _get_bedrock_model "pro" ;;
-        default) _get_bedrock_model "flash" ;;
+        lite)   echo "gemini-flash-lite-latest" ;;
+        flash)  echo "gemini-flash-latest" ;;
+		pro)  echo "gemini-pro-latest" ;;
+        fast)    _get_gemini_model "lite" ;;
+        normal)  _get_gemini_model "flash" ;;
+        slow)    _get_gemini_model "pro" ;;
+        default) _get_gemini_model "flash" ;;
         *)       echo "$1" ;;  # Unknown key
     esac
 }
@@ -97,7 +104,7 @@ ask_gemini() {
             }]
           }')
 
-		local response=$(curl -s "https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=$GEMINI_API_KEY" \
+		local response=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=$GEMINI_API_KEY" \
 			-H 'Content-Type: application/json' \
 			-X POST \
 			-d "$message")
