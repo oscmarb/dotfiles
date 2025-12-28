@@ -38,6 +38,8 @@ setopt PUSHD_SILENT         # Don't print directory stack after pushd/popd
 setopt PUSHD_TO_HOME        # pushd with no args goes to $HOME
 # END DIRECTORY NAVIGATION
 
+setopt interactive_comments # Allowing Comments in Interactive Shells
+
 # HISTORY
 HISTSIZE=10000        # Max commands in memory
 SAVEHIST=$HISTSIZE        # Max commands saved to file
