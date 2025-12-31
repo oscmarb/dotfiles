@@ -41,15 +41,6 @@ alias gacpush='git_append_commit_push' # add, commit & push
 # this potentially destructive command.
 alias gr='confirm_action "git reset --hard" "Are you sure you want to reset the current branch to the latest commit?"'
 
-alias gst='git stash'
-alias gstl='git stash list'
-alias gstp='git stash pop'
-
-# Command: git stash apply <stash>
-# Description: Applies a stash (the most recent one by default) but does not
-# remove it from the stash list.
-alias gsta='git stash apply'
-
 # Shows differences between the working directory and the staging area (index). Displays all changes that have not yet been staged.
 alias gd='git diff'
 
