@@ -68,3 +68,7 @@ linux::is_snap_installed() {
 linux::is_package_available_in_apt() {
     system::execute_silently apt-cache show "$1"
 }
+
+linux::is_binary_available() {
+    system::execute_silently which "$1"
+}

@@ -6,6 +6,18 @@ alias rl="reload"
 alias fzfp="fzf --preview '$DOTFILES_PATH/fzf/preview {}'"
 alias ubuntu-container='docker run --rm -it ubuntu:latest'
 
+updaterust(){
+  if system::is_binary_available "rustup"; then
+    rustup update
+
+    return $?
+  fi
+
+  system::print_error "rustup not found"
+
+  return 1
+}
+
 reload() {
   if [[ "$shell" == "zsh" ]]; then
     if [ -d "$HOME/.zshrc" ]; then
