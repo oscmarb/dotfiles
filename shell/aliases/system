@@ -18,6 +18,17 @@ updaterust(){
   return 1
 }
 
+searchalias(){
+  local alias="$(alias | fzf --query="$*" --height 100% --delimiter='\n' | awk -F '=' '{print $1}')"
+
+  if [ -n "$ZSH_VERSION" ]; then
+      print -z -- "$alias "
+  elif [ -n "$BASH_VERSION" ]; then
+      # In bash, we can't use print -z, so just output to stdout
+      echo "$alias"
+  fi
+}
+
 reload() {
   if [[ "$shell" == "zsh" ]]; then
     if [ -d "$HOME/.zshrc" ]; then
