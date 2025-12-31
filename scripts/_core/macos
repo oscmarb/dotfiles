@@ -48,3 +48,7 @@ macos::is_package_available_in_brew_cask() {
 macos::is_package_available_in_brew() {
     system::execute_silently brew info $1
 }
+
+macos::is_binary_available() {
+    system::execute_silently which $1
+}

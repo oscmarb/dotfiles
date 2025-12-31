@@ -57,6 +57,10 @@ system::is_package_installed() {
     system::is_custom_package_installed "$1" || $(system::os_alias)::is_package_installed $@
 }
 
+system::is_binary_available() {
+    $(system::os_alias)::is_binary_available "$1"
+}
+
 system::update() {
     if system::is_env_true "$DOTFILES_ALREADY_UPDATED" && ! system::is_env_true "$1"; then
         return 0
