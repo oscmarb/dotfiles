@@ -2,8 +2,9 @@
 
 # DOCKER
 alias ds='docker stop'
-alias dsa='docker stop $(docker ps -a -q)'
 alias dpsa='docker ps -a'
+alias dsc='docker stop'
+alias dsac='docker stop $(docker ps -a -q)'
 alias drc='docker rm'
 alias drac='drc $(docker ps -a -q)'
 alias dri='docker rmi'
