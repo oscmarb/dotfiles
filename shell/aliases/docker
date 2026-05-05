@@ -9,7 +9,11 @@ alias di='docker images'
 alias dcn='docker ps --format "{{.Names}}"'
 
 # Usage: _docker_action <prompt> <multi:0|1> <list_cmd> <docker_cmd> [args...]
-# If args given, runs docker_cmd directly; otherwise opens fzf with list_cmd output.
+# If args given (without --), runs docker_cmd directly; otherwise opens fzf.
+# Use -- to separate: everything before -- is passed as-is (or fzf if empty),
+# everything after -- is appended after the container name.
+# Examples: dl -- -f  =>  fzf + docker logs <selected> -f
+#           dl mycontainer -- -f  =>  docker logs mycontainer -f
 _docker_action() {
     local prompt="$1" multi="$2" list_cmd="$3" docker_cmd="$4"
     shift 4
@@ -17,20 +21,33 @@ _docker_action() {
     local cmd_arr
     eval "cmd_arr=($docker_cmd)"
 
-    if (( $# > 0 )); then
-        "${cmd_arr[@]}" "$@"
+    local pre_args=() post_args=()
+    local seen_dd=false
+
+    for arg in "$@"; do
+        if [[ "$arg" == "--" ]]; then
+            seen_dd=true
+            continue
+        fi
+        if $seen_dd; then
+            post_args+=("$arg")
+        else
+            pre_args+=("$arg")
+        fi
+    done
+
+    if (( ${#pre_args[@]} > 0 )); then
+        # There is already an argument, skipping fzf
+        "${cmd_arr[@]}" "${pre_args[@]}" "${post_args[@]}"
         return
     fi
 
     local fzf_opts=()
     [[ "$multi" == "1" ]] && fzf_opts+=("-m")
-
-    local selection
-    selection=$(eval "$list_cmd" | fzf "${fzf_opts[@]}" --prompt="$prompt" --bind 'tab:toggle')
-
+    local selection=$(eval "$list_cmd" | fzf "${fzf_opts[@]}" --prompt="$prompt" --bind 'tab:toggle')
     [[ -z "$selection" ]] && return 1
 
-    printf '%s\n' "$selection" | xargs "${cmd_arr[@]}"
+    printf '%s\n' "$selection" | xargs "${cmd_arr[@]}" "${post_args[@]}"
 }
 
 dsc() { _docker_action "Stop container: "    			1 "docker ps --format '{{.Names}}'"                   "docker stop" "$@"; }
@@ -40,13 +57,36 @@ dlf() { _docker_action "Container logs (follow): " 0 "docker ps --format '{{.Nam
 dri() { _docker_action "Remove image: "      			1 "docker images --format '{{.Repository}}:{{.Tag}}'" "docker rmi"  "$@"; }
 
 # Arguments: container name & shell type (bash by default)
+# Use -- to separate: args before -- are container name (or fzf if empty),
+# args after -- replace the default "bash" shell.
+# Examples: de -- sh  =>  fzf + docker exec -it <selected> sh
+#           de mycontainer -- sh  =>  docker exec -it mycontainer sh
 de() {
-    local container=${1:-}
-    if [[ -z "$container" ]]; then
+    local container="" shell=()
+    local seen_dd=false
+
+    for arg in "$@"; do
+        if [[ "$arg" == "--" ]]; then
+            seen_dd=true
+            continue
+        fi
+        if $seen_dd; then
+            shell+=("$arg")
+        elif [[ -z "$container" ]]; then
+            container="$arg"
+        else
+            shell+=("$arg")
+        fi
+    done
+
+    [[ -z "$container" ]] && {
         container=$(docker ps --format "{{.Names}}" | fzf --prompt="Exec container: " --bind 'tab:toggle')
         [[ -z "$container" ]] && return 1
-    fi
-    docker exec -it "$container" "${2:-bash}"
+    }
+
+    (( ${#shell[@]} == 0 )) && shell=(bash)
+
+    docker exec -it "$container" "${shell[@]}"
 }
 
 # DOCKER COMPOSE
