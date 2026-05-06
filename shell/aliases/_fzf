@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Generic fzf-based interactive command builder.
+# Replaces a placeholder in a command template with user selection(s) from fzf.
+#
+# OPTIONS:
+#   -m, --multi       Multi-select: run one command per selected item.
+#   -j, --join        (with -m) Join all selections into ONE command.
+#   -p, --prompt STR  fzf prompt (default: "Select: ").
+#   -P, --pattern STR Placeholder string (default: "<attr>").
+#
+# POSITIONAL:
+#   cmd_template       e.g. "docker stop <attr>"
+#   fzf_cmd            e.g. "docker ps --format '{{.Names}}'"
+#
+# REMAINING ARGS:
+#   [direct_value]     Skip fzf, use this value instead.
+#   [-- extra_args]    Appended after the resolved placeholder value.
+#
+# EXAMPLES:
+#   dsc() { _fzf_select -m -j -p "Stop container: " "docker stop <attr>" "docker ps --format '{{.Names}}'" "$@"; }
+#   dl()  { _fzf_select -p "Container logs: " "docker logs <attr>" "docker ps --format '{{.Names}}'" "$@"; }
+#   dl -- -f => docker logs <selected> -f
+#   dl mycontainer -- -f => docker logs mycontainer -f
+_fzf_select() {
+	local multi=false join=false prompt="Select: " pattern="<attr>"
+
+	while [[ "$1" == -* ]]; do
+		case "$1" in
+			-m|--multi)  multi=true; shift ;;
+			-j|--join)   join=true; shift ;;
+			-p|--prompt) prompt="$2"; shift 2 ;;
+			-P|--pattern) pattern="$2"; shift 2 ;;
+			--) shift; break ;;
+			*) break ;;
+		esac
+	done
+
+	local cmd_template="$1"
+	local fzf_cmd="$2"
+	shift 2
+
+	local direct_value="" extra_args=()
+	local saw_dd=false
+
+	for arg in "$@"; do
+		if [[ "$arg" == "--" ]]; then
+			saw_dd=true
+			continue
+		fi
+		if $saw_dd; then
+			extra_args+=("$arg")
+		elif [[ -z "$direct_value" ]]; then
+			direct_value="$arg"
+		fi
+	done
+
+	local values=()
+	if [[ -n "$direct_value" ]]; then
+		values=("$direct_value")
+	else
+		local fzf_opts=()
+		$multi && fzf_opts+=("-m")
+
+		local selection
+		selection=$(eval "$fzf_cmd" | fzf "${fzf_opts[@]}" --prompt="$prompt" --bind 'tab:toggle')
+		[[ -z "$selection" ]] && return 1
+
+		local IFS=$'\n'
+		# shellcheck disable=SC2206
+		values=($selection)
+	fi
+
+	if $multi && $join; then
+		local joined="${values[*]}"
+		local cmd_str="${cmd_template//$pattern/$joined}"
+		local cmd_arr
+		eval "cmd_arr=($cmd_str)"
+		"${cmd_arr[@]}" "${extra_args[@]}"
+	else
+		for val in "${values[@]}"; do
+			local cmd_str="${cmd_template//$pattern/$val}"
+			local cmd_arr
+			eval "cmd_arr=($cmd_str)"
+			"${cmd_arr[@]}" "${extra_args[@]}"
+		done
+	fi
+}
